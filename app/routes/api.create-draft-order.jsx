@@ -19,6 +19,7 @@ export const action = async ({ request }) => {
     const quote = calculateOrder({
       sizes: body.sizes,
       printWidth: body.printWidth,
+      printLocation: body.printLocation || "Front",
       garment: body.garment || "PC450",
       color: body.color || "Athletic Heather",
       markup: 2,
@@ -65,11 +66,12 @@ export const action = async ({ request }) => {
                   { key: "Garment", value: body.garment || "PC450 Core Cotton Tee" },
                   { key: "Color", value: body.color || "Athletic Heather" },
                   { key: "Sizes", value: sizeText },
-                  { key: "Print location", value: body.printLocation || "Front" },
+                  { key: "Print location", value: quote.printLocation },
                   { key: "Print width", value: `${body.printWidth} in` },
                   { key: "Total garments", value: String(quote.quantity) },
                   { key: "Garments subtotal", value: `$${quote.garments.toFixed(2)}` },
                   { key: "DTF printing", value: `$${quote.dtf.toFixed(2)}` },
+                  { key: "DTF prints per garment", value: String(quote.printsPerGarment) },
                   { key: "DTF tier", value: `${quote.tier} @ $${quote.rate.toFixed(2)}/print` },
                 ],
               },
@@ -91,6 +93,8 @@ export const action = async ({ request }) => {
         total: quote.total.toFixed(2),
         rate: quote.rate.toFixed(2),
         tier: quote.tier,
+        printsPerGarment: quote.printsPerGarment,
+        printLocation: quote.printLocation,
       },
     });
   } catch (error) {
