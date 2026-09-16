@@ -23,8 +23,8 @@ export const DTF_PRICES = {
 
 export const SIZES = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 
-// Blank-cost baseline for the Gildan 18500 hoodie. This is intentionally
-// centralized so the sourcing cost can be changed in one place later.
+// Blank-cost baseline for the Gildan 18500 hoodie. Centralized so sourcing
+// costs can be changed in one place without touching the UI or checkout code.
 const HOODIE_COSTS = {
   S: 10.15,
   M: 10.15,
@@ -60,9 +60,7 @@ export const GARMENTS = {
     label: "PC450 Core Cotton Tee",
     colors: ["Athletic Heather"],
     costs: { "Athletic Heather": PC450_COSTS },
-    variantIds: {
-      "Athletic Heather": "gid://shopify/ProductVariant/57401445056678",
-    },
+    variantIds: { "Athletic Heather": "gid://shopify/ProductVariant/57401445056678" },
   },
   G5000: {
     label: "Gildan G5000 100% Cotton Tee",
@@ -145,18 +143,17 @@ export function getTier(quantity) {
 export function getVariantId(garment, color, sizes = {}) {
   const config = GARMENTS[garment];
   if (!config) return null;
-
   if (garment !== "G18500") return config.variantIds[color] || null;
-
   const size = SIZES.find((candidate) => Number(sizes[candidate] || 0) > 0) || "S";
   return config.variantIds[`${color}:${size}`] || null;
 }
 
-export function calculateOrder({ sizes, printWidth, garment = "PC450", color = "Athletic Heather", markup = 2 }) {
+export function calculateOrder({ sizes, printWidth, printLocation = "Front", garment = "PC450", color = "Athletic Heather", markup = 2 }) {
   if (!sizes || typeof sizes !== "object") throw new Error("Sizes are required.");
 
   const width = String(printWidth);
   if (!DTF_PRICES[width]) throw new Error("Invalid print width.");
+  if (!["Front", "Back", "Front + Back"].includes(printLocation)) throw new Error("Invalid print location.");
 
   const config = GARMENTS[garment];
   const sizeCosts = config?.costs?.[color];
@@ -181,7 +178,8 @@ export function calculateOrder({ sizes, printWidth, garment = "PC450", color = "
 
   const [tierIndex, tierName] = getTier(quantity);
   const rate = DTF_PRICES[width][tierIndex];
-  const dtf = quantity * rate;
+  const printsPerGarment = printLocation === "Front + Back" ? 2 : 1;
+  const dtf = quantity * rate * printsPerGarment;
 
   return {
     quantity,
@@ -191,5 +189,7 @@ export function calculateOrder({ sizes, printWidth, garment = "PC450", color = "
     total: garments + dtf,
     rate,
     tier: tierName,
+    printsPerGarment,
+    printLocation,
   };
 }
