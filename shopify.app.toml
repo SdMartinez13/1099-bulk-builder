@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "0fcbca516badb0f73c2605b1ac553cc0"
-application_url = "https://example.com"
+application_url = "https://one099-bulk-builder.onrender.com"
 embedded = true
 name = "1099-bulk-builder"
 
@@ -19,7 +19,7 @@ description = "Tracks products created by the Shopify app template for developme
 
 [metaobjects.app.example]
 name = "Example"
-description = "An example metaobject definition created by this template"
+description = "An example metaobject defined by the app"
 
   [metaobjects.app.example.access]
   admin = "merchant_read_write"
@@ -45,11 +45,10 @@ api_version = "2026-10"
   topics = [ "app/scopes_update" ]
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://one099-bulk-builder.onrender.com/api/auth" ]
 
 [build]
-automatically_update_urls_on_dev = true
-
+automatically_update_urls_on_dev = false
 
 [app_proxy]
 url = "/app-proxy"
