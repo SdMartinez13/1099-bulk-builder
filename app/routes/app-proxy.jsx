@@ -10,6 +10,7 @@ export const action = async ({ request }) => {
     const { admin, session } = await authenticate.public.appProxy(request);
     if (!admin) throw new Error("Unable to access Shopify Admin API.");
 
+    console.log("APP PROXY REQUEST CONTENT-TYPE:", request.headers.get("content-type") || "(missing)");
     const form = await request.formData();
     const garment = String(form.get("garment") || "PC450").trim();
     const color = String(form.get("color") || "Athletic Heather").trim();
