@@ -10,14 +10,28 @@ export const action = async ({ request }) => {
     const { admin, session } = await authenticate.public.appProxy(request);
     if (!admin) throw new Error("Unable to access Shopify Admin API.");
 
-    console.log("APP PROXY REQUEST CONTENT-TYPE:", request.headers.get("content-type") || "(missing)");
-    const form = await request.formData();
-    const garment = String(form.get("garment") || "PC450").trim();
-    const color = String(form.get("color") || "Athletic Heather").trim();
-    const printLocation = String(form.get("printLocation") || "Front");
-    const printWidth = String(form.get("printWidth") || "4");
-    const sizes = JSON.parse(String(form.get("sizes") || "{}"));
-    const artwork = form.get("artwork");
+    const contentType = request.headers.get("content-type") || "";
+    console.log("APP PROXY REQUEST CONTENT-TYPE:", contentType || "(missing)");
+
+    let payload;
+    let artwork = null;
+
+    if (contentType.includes("application/json")) {
+      payload = await request.json();
+      console.log("APP PROXY JSON KEYS:", Object.keys(payload || {}));
+    } else {
+      const form = await request.formData();
+      payload = Object.fromEntries(form.entries());
+      artwork = form.get("artwork");
+    }
+
+    const garment = String(payload?.garment || "PC450").trim();
+    const color = String(payload?.color || "Athletic Heather").trim();
+    const printLocation = String(payload?.printLocation || "Front");
+    const printWidth = String(payload?.printWidth || "4");
+    const sizes = typeof payload?.sizes === "string"
+      ? JSON.parse(payload.sizes || "{}")
+      : (payload?.sizes || {});
 
     const variantId = getVariantId(garment, color, sizes);
     if (!variantId) throw new Error(`Unsupported garment/color combination: ${garment} / ${color}`);
