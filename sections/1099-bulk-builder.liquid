@@ -141,12 +141,13 @@ r.querySelector('#bbcheckout').addEventListener('click',async()=>{
       throw new Error(message);
     }
 
-    let checkoutUrl=raw;
-    if(raw.startsWith('{')){
-      try{
-        const data=JSON.parse(raw);
-        checkoutUrl=data.draftOrder?.invoiceUrl||data.invoiceUrl||'';
-      }catch(_){}
+    let checkoutUrl='';
+    try{
+      const data=JSON.parse(raw);
+      checkoutUrl=data.invoiceUrl||data.draftOrder?.invoiceUrl||'';
+    }catch(_){
+      const match=raw.match(/https:\/\/[^"'<>\\s]+\/invoices\/[^"'<>\\s]+/i);
+      checkoutUrl=match?.[0]||'';
     }
     if(!/^https:\/\//i.test(checkoutUrl)){
       throw new Error('Shopify did not return a checkout URL');
