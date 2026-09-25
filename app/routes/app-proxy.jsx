@@ -113,12 +113,14 @@ export const action = async ({ request }) => {
       total: result.draftOrder.totalPriceSet?.shopMoney?.amount
     }));
 
-    const wantsPlainText = (request.headers.get("accept") || "").includes("text/plain");
-    if (wantsPlainText) {
-      return new Response(result.draftOrder.invoiceUrl, {
-        status: 200,
+    const url = new URL(request.url);
+    const isAppProxyRequest = url.searchParams.has("signature") && url.searchParams.has("path_prefix");
+
+    if (isAppProxyRequest) {
+      return new Response(null, {
+        status: 303,
         headers: {
-          "Content-Type": "text/plain; charset=utf-8",
+          "Location": result.draftOrder.invoiceUrl,
           "Cache-Control": "no-store"
         },
       });
