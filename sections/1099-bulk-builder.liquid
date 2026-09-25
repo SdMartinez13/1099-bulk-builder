@@ -88,8 +88,28 @@ function calc(){qs.forEach(i=>i.parentElement.classList.toggle('hasqty',Math.max
 qs.forEach(i=>i.addEventListener('input',calc));w.addEventListener('change',calc);
 
 const artworkInput=r.querySelector('#bbart');
+let checkoutUrlReady='';
+
+function goToCheckout(url){
+  try{
+    const a=document.createElement('a');
+    a.href=url;
+    a.target='_top';
+    a.rel='noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }catch(_){
+    window.location.href=url;
+  }
+}
 
 r.querySelector('#bbcheckout').addEventListener('click',async()=>{
+  if(checkoutUrlReady){
+    goToCheckout(checkoutUrlReady);
+    return;
+  }
+
   calc();
   if(!quote||!quote.n)return;
 
@@ -153,10 +173,12 @@ r.querySelector('#bbcheckout').addEventListener('click',async()=>{
       throw new Error('Shopify did not return a checkout URL');
     }
 
-    st.textContent='SUCCESS — secure checkout created.';
-    b.textContent='CHECKOUT READY ✓';
+    checkoutUrlReady=checkoutUrl;
+    st.textContent='SUCCESS — secure checkout created. Opening checkout…';
+    b.disabled=false;
+    b.textContent='CONTINUE TO CHECKOUT →';
 
-    window.location.assign(checkoutUrl);
+    goToCheckout(checkoutUrl);
   }catch(e){
     st.textContent=e.name==='AbortError'
       ? 'Checkout request timed out after 30 seconds.'
