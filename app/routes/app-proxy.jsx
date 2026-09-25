@@ -120,7 +120,7 @@ export const action = async ({ request }) => {
     }), {
       status: 200,
       headers: {
-        "Content-Type": "application/liquid; charset=utf-8",
+        "Content-Type": "application/json; charset=utf-8",
         "Cache-Control": "no-store"
       },
     });;
