@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
 import { authenticate } from "../shopify.server";
 import { calculateOrder, GARMENTS, PRINT_WIDTHS, SIZES } from "../garment-config";
@@ -113,10 +113,14 @@ export const action = async ({ request }) => {
       total: result.draftOrder.totalPriceSet?.shopMoney?.amount
     }));
 
-    return new Response(null, {
-      status: 303,
+    return new Response(JSON.stringify({
+      ok: true,
+      invoiceUrl: result.draftOrder.invoiceUrl,
+      draftOrder: result.draftOrder
+    }), {
+      status: 200,
       headers: {
-        "Location": result.draftOrder.invoiceUrl,
+        "Content-Type": "application/json; charset=utf-8",
         "Cache-Control": "no-store"
       },
     });;
@@ -139,6 +143,12 @@ export default function BulkBuilder() {
 
   const config = GARMENTS[garment];
   const colors = config.colors;
+
+  useEffect(() => {
+    if (fetcher.data?.ok && fetcher.data?.invoiceUrl) {
+      window.location.assign(fetcher.data.invoiceUrl);
+    }
+  }, [fetcher.data]);
 
   const quote = useMemo(() => {
     try {
