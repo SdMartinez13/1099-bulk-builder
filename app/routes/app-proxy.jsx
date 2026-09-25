@@ -107,6 +107,11 @@ export const action = async ({ request }) => {
     const result = json.data?.draftOrderCreate;
     if (result?.userErrors?.length) return Response.json({ ok: false, errors: result.userErrors }, { status: 400 });
     if (!result?.draftOrder) throw new Error("Shopify did not create the Draft Order.");
+    console.log("1099 CHECKOUT CREATED", JSON.stringify({
+      name: result.draftOrder.name,
+      invoiceUrl: result.draftOrder.invoiceUrl,
+      total: result.draftOrder.totalPriceSet?.shopMoney?.amount
+    }));
 
     return new Response(JSON.stringify({
       ok: true,
