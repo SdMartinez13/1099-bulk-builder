@@ -108,9 +108,16 @@ export const action = async ({ request }) => {
     if (result?.userErrors?.length) return Response.json({ ok: false, errors: result.userErrors }, { status: 400 });
     if (!result?.draftOrder) throw new Error("Shopify did not create the Draft Order.");
 
-    return new Response(result.draftOrder.invoiceUrl, {
+    return new Response(JSON.stringify({
+      ok: true,
+      invoiceUrl: result.draftOrder.invoiceUrl,
+      draftOrder: result.draftOrder
+    }), {
       status: 200,
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      headers: {
+        "Content-Type": "application/liquid; charset=utf-8",
+        "Cache-Control": "no-store"
+      },
     });;
   } catch (error) {
     console.error("APP PROXY DRAFT ORDER ERROR:", error);
