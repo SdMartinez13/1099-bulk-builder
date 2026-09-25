@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useFetcher } from "react-router";
 import { authenticate } from "../shopify.server";
-import { calculateOrder, GARMENTS, PRINT_WIDTHS, SIZES, getVariantId } from "../garment-config";
+import { calculateOrder, GARMENTS, PRINT_WIDTHS, SIZES } from "../garment-config";
 
 export const loader = async () => null;
 
@@ -17,9 +17,6 @@ export const action = async ({ request }) => {
     const printWidth = String(form.get("printWidth") || "4");
     const sizes = JSON.parse(String(form.get("sizes") || "{}"));
     const artwork = form.get("artwork");
-
-    const variantId = getVariantId(garment, color, sizes);
-    if (!variantId) throw new Error(`Unsupported garment/color combination: ${garment} / ${color}`);
 
     const quote = calculateOrder({ sizes, printWidth, printLocation, garment, color, markup: 2 });
     const sizeText = Object.entries(quote.sizes).map(([size, qty]) => `${size}: ${qty}`).join(", ");
@@ -74,9 +71,9 @@ export const action = async ({ request }) => {
       variables: {
         input: {
           lineItems: [{
-            variantId,
+            title: "1099 Designs Custom Apparel Order",
             quantity: 1,
-            priceOverride: { amount: quote.total.toFixed(2), currencyCode: "USD" },
+            originalUnitPriceWithCurrency: { amount: quote.total.toFixed(2), currencyCode: "USD" },
             customAttributes: [
               { key: "Garment", value: GARMENTS[garment].label },
               { key: "Color", value: color },
