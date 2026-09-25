@@ -113,14 +113,10 @@ export const action = async ({ request }) => {
       total: result.draftOrder.totalPriceSet?.shopMoney?.amount
     }));
 
-    return new Response(JSON.stringify({
-      ok: true,
-      invoiceUrl: result.draftOrder.invoiceUrl,
-      draftOrder: result.draftOrder
-    }), {
-      status: 200,
+    return new Response(null, {
+      status: 303,
       headers: {
-        "Content-Type": "application/json; charset=utf-8",
+        "Location": result.draftOrder.invoiceUrl,
         "Cache-Control": "no-store"
       },
     });;
