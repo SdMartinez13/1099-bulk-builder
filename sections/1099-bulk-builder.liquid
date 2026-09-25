@@ -128,24 +128,34 @@ r.querySelector('#bbcheckout').addEventListener('click',async()=>{
 
     clearTimeout(timeout);
 
-    const data=await res.json().catch(()=>({}));
+    const raw=(await res.text()).trim();
 
-    if(!res.ok||!data.ok){
-      throw new Error(
-        data.error||
-        (data.errors&&data.errors.map(e=>e.message).join(', '))||
-        'Unable to create checkout'
-      );
+    if(!res.ok){
+      let message='Unable to create checkout';
+      try{
+        const data=JSON.parse(raw);
+        message=data.error||(data.errors&&data.errors.map(e=>e.message).join(', '))||message;
+      }catch(_){
+        if(raw) message=raw;
+      }
+      throw new Error(message);
     }
 
-    if(!data.draftOrder||!data.draftOrder.invoiceUrl){
+    let checkoutUrl=raw;
+    if(raw.startsWith('{')){
+      try{
+        const data=JSON.parse(raw);
+        checkoutUrl=data.draftOrder?.invoiceUrl||data.invoiceUrl||'';
+      }catch(_){}
+    }
+    if(!/^https:\/\//i.test(checkoutUrl)){
       throw new Error('Shopify did not return a checkout URL');
     }
 
     st.textContent='SUCCESS — secure checkout created.';
     b.textContent='CHECKOUT READY ✓';
 
-    window.location.assign(data.draftOrder.invoiceUrl);
+    window.location.assign(checkoutUrl);
   }catch(e){
     st.textContent=e.name==='AbortError'
       ? 'Checkout request timed out after 30 seconds.'
