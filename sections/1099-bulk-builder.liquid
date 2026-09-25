@@ -8,7 +8,7 @@
 <div class="step"><div class="stepno">01</div><h2>CHOOSE YOUR GARMENT</h2><div class="grid"><div><label>Style</label><select id="bbstyle"><option value="PC450">PC450 — Core Cotton Tee</option><option value="G5000">Gildan G5000 — Heavy Cotton T-Shirt</option><option value="G18500">Gildan Heavy Blend Hoodie — 18500</option></select></div><div><label>Color</label><select id="bbcolor"><option value="Athletic Heather">Athletic Heather</option></select></div></div></div>
 <div id="bbgarmentpreview" style="margin-top:18px;text-align:center"><img id="bbgarmentimg" src="https://cdn.shopify.com/s/files/1/0763/1677/0470/files/1099-test-pc450-athletic-heather.png?v=1789518236" alt="Selected garment preview" width="300" height="300" style="max-width:260px;width:100%;height:auto;border-radius:8px"><div class="garmentcaption" id="bbgarmentcaption">PC450 — Core Cotton Tee<br><span>Athletic Heather</span></div></div><div class="step"><div class="stepno">02</div><h2>ENTER YOUR SIZES</h2><div class="sizes">{% assign sizes='S,M,L,XL,2XL,3XL,4XL' | split:',' %}{% for s in sizes %}<div><label>{{ s }}</label><input class="bbqty" data-size="{{ s }}" type="number" min="0" value="0"></div>{% endfor %}</div></div>
 <div class="step"><div class="stepno">03</div><h2>PRINT SETUP</h2><div class="grid printsetup"><div class="printcontrol"><label>Print location</label><select id="bbloc"><option>Front</option><option>Back</option></select><div class="controlhint">Choose which side of the garment receives the print.</div></div><div class="printcontrol"><label>Artwork width</label><select id="bbw">{% assign widths='1.5,2,3,3.5,4,5,6,7,8,9,10,10.5,11,12,13,14,15,16' | split:',' %}{% for w in widths %}<option value="{{ w }}" {% if w == '8' %}selected{% endif %}>{{ w }}&quot;</option>{% endfor %}</select><div class="controlhint">Finished print width in inches.</div></div></div></div>
-<div class="step"><div class="stepno">04</div><h2>YOUR ARTWORK</h2><label>Upload artwork (optional)</label><input id="bbart" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf"><p class="fine">PNG, JPG, WEBP, SVG or PDF. Don&apos;t have your artwork ready? No problem—you can send it to us after placing your order.</p></div>
+<div class="step"><div class="stepno">04</div><h2>YOUR ARTWORK</h2><label>Upload artwork (optional)</label><input id="bbart" name="artwork" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf"><p class="fine">PNG, JPG, WEBP, SVG or PDF. Don&apos;t have your artwork ready? No problem—you can send it to us after placing your order.</p></div>
 <div class="quote"><div class="eyebrow">LIVE BULK PRICING</div><h2>Order subtotal</h2><div class="total" id="bbtotal">$0.00</div><div class="qgrid"><div>Average per shirt</div><strong id="bbavg">$0.00</strong><div>Total shirts</div><strong id="bbcount">0</strong><div>Garments</div><strong id="bbgarments">$0.00</strong><div>DTF printing</div><strong id="bbdtf">$0.00</strong><div>Quantity tier</div><strong id="bbtier">—</strong></div><button type="button" id="bbcheckout" class="btn checkout" disabled>CREATE SECURE CHECKOUT</button><div id="bbstatus" class="status"></div><div class="fine">Estimate before tax and shipping. Final artwork is reviewed before production.</div></div></div></section>
 <script>
 (()=>{const r=document.getElementById('bulk-builder-{{ section.id }}');if(!r)return;const qs=[...r.querySelectorAll('.bbqty')],w=r.querySelector('#bbw'),markup=+r.dataset.markup||2;const prices={'1.5':[1,.8,.65,.55,.45],'2':[1.5,1.2,.98,.83,.68],'3':[2,1.6,1.3,1.1,.9],'3.5':[2.25,1.8,1.46,1.24,1.01],'4':[2.5,2,1.63,1.38,1.13],'5':[3,2.4,1.95,1.65,1.35],'6':[3.25,2.6,2.11,1.79,1.46],'7':[3.5,2.8,2.28,1.93,1.58],'8':[3.75,3,2.44,2.06,1.69],'9':[4,3.2,2.6,2.2,1.8],'10':[4.25,3.4,2.76,2.34,1.91],'10.5':[4.5,3.6,2.93,2.48,2.03],'11':[4.5,3.6,2.93,2.48,2.03],'12':[5.5,4.4,3.58,3.03,2.48],'13':[6,4.8,3.9,3.3,2.7],'14':[7,5.6,4.55,3.85,3.15],'15':[8,6.4,5.2,4.4,3.6],'16':[9,7.2,5.85,4.95,4.05]};const tier=n=>n>=250?[4,'250+']:n>=100?[3,'100–249']:n>=50?[2,'50–99']:n>=10?[1,'10–49']:[0,'1–9'];const money=n=>'$'+n.toFixed(2);let quote=null;
@@ -88,28 +88,8 @@ function calc(){qs.forEach(i=>i.parentElement.classList.toggle('hasqty',Math.max
 qs.forEach(i=>i.addEventListener('input',calc));w.addEventListener('change',calc);
 
 const artworkInput=r.querySelector('#bbart');
-let checkoutUrlReady='';
 
-function goToCheckout(url){
-  try{
-    const a=document.createElement('a');
-    a.href=url;
-    a.target='_top';
-    a.rel='noopener';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  }catch(_){
-    window.location.href=url;
-  }
-}
-
-r.querySelector('#bbcheckout').addEventListener('click',async()=>{
-  if(checkoutUrlReady){
-    goToCheckout(checkoutUrlReady);
-    return;
-  }
-
+r.querySelector('#bbcheckout').addEventListener('click',()=>{
   calc();
   if(!quote||!quote.n)return;
 
@@ -117,76 +97,35 @@ r.querySelector('#bbcheckout').addEventListener('click',async()=>{
   const st=r.querySelector('#bbstatus');
 
   b.disabled=true;
-  b.textContent='BUILDING ORDER…';
-  st.textContent='Confirming pricing and creating your secure checkout…';
+  b.textContent='OPENING CHECKOUT…';
+  st.textContent='Creating your secure checkout…';
 
-  const artworkFile=artworkInput?.files?.[0]||null;
+  const form=document.createElement('form');
+  form.method='POST';
+  form.action='/apps/1099-builder';
+  form.enctype='multipart/form-data';
+  form.style.display='none';
 
-  const formData=new FormData();
-  formData.append('garment',r.querySelector('#bbstyle').value);
-  formData.append('color',r.querySelector('#bbcolor').value);
-  formData.append('printLocation',r.querySelector('#bbloc').value);
-  formData.append('printWidth',w.value);
-  formData.append('sizes',JSON.stringify(quote.sizes));
+  const add=(name,value)=>{
+    const input=document.createElement('input');
+    input.type='hidden';
+    input.name=name;
+    input.value=value;
+    form.appendChild(input);
+  };
 
-  if(artworkFile){
-    formData.append('artwork',artworkFile,artworkFile.name);
+  add('garment',r.querySelector('#bbstyle').value);
+  add('color',r.querySelector('#bbcolor').value);
+  add('printLocation',r.querySelector('#bbloc').value);
+  add('printWidth',w.value);
+  add('sizes',JSON.stringify(quote.sizes));
+
+  if(artworkInput && artworkInput.files && artworkInput.files.length){
+    form.appendChild(artworkInput);
   }
 
-  try{
-    const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),30000);
-
-    const res=await fetch('/apps/1099-builder',{
-      method:'POST',
-      headers:{
-        'Accept':'text/plain'
-      },
-      body:formData,
-      signal:controller.signal
-    });
-
-    clearTimeout(timeout);
-
-    const raw=(await res.text()).trim();
-
-    if(!res.ok){
-      let message='Unable to create checkout';
-      try{
-        const data=JSON.parse(raw);
-        message=data.error||(data.errors&&data.errors.map(e=>e.message).join(', '))||message;
-      }catch(_){
-        if(raw) message=raw;
-      }
-      throw new Error(message);
-    }
-
-    let checkoutUrl=raw;
-    if(!/^https:\/\//i.test(checkoutUrl)){
-      try{
-        const data=JSON.parse(raw);
-        checkoutUrl=data.invoiceUrl||data.draftOrder?.invoiceUrl||'';
-      }catch(_){
-        checkoutUrl='';
-      }
-    }
-    if(!/^https:\/\//i.test(checkoutUrl)){
-      throw new Error('Shopify did not return a checkout URL');
-    }
-
-    checkoutUrlReady=checkoutUrl;
-    st.textContent='SUCCESS — secure checkout created. Opening checkout…';
-    b.disabled=false;
-    b.textContent='CONTINUE TO CHECKOUT →';
-
-    goToCheckout(checkoutUrl);
-  }catch(e){
-    st.textContent=e.name==='AbortError'
-      ? 'Checkout request timed out after 30 seconds.'
-      : 'Could not create checkout: '+e.message;
-    b.disabled=false;
-    b.textContent='CREATE SECURE CHECKOUT';
-  }
+  document.body.appendChild(form);
+  form.submit();
 });calc()})();
 </script>
 {% schema %}{"name":"1099 Bulk Builder","settings":[{"type":"text","id":"heading","label":"Heading","default":"BUILD YOUR BULK ORDER"},{"type":"range","id":"garment_markup_percent","label":"Garment markup %","min":0,"max":300,"step":5,"default":100}],"presets":[{"name":"1099 Bulk Builder"}]}{% endschema %}
