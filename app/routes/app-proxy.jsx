@@ -113,6 +113,17 @@ export const action = async ({ request }) => {
       total: result.draftOrder.totalPriceSet?.shopMoney?.amount
     }));
 
+    const wantsPlainText = (request.headers.get("accept") || "").includes("text/plain");
+    if (wantsPlainText) {
+      return new Response(result.draftOrder.invoiceUrl, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-store"
+        },
+      });
+    }
+
     return new Response(JSON.stringify({
       ok: true,
       invoiceUrl: result.draftOrder.invoiceUrl,
@@ -123,7 +134,7 @@ export const action = async ({ request }) => {
         "Content-Type": "application/json; charset=utf-8",
         "Cache-Control": "no-store"
       },
-    });;
+    });
   } catch (error) {
     console.error("APP PROXY DRAFT ORDER ERROR:", error);
     return Response.json({ ok: false, error: error instanceof Error ? error.message : "Unable to create order." }, { status: 400 });
