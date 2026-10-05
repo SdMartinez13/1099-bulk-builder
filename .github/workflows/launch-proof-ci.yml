@@ -24,8 +24,8 @@ jobs:
           node-version: '22.18.0'
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install root app dependencies
+        run: npm ci --workspaces=false
 
       - name: Typecheck
         run: npm run typecheck
