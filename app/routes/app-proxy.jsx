@@ -11,10 +11,15 @@ import {
 } from "../garment-config";
 
 export const loader = async ({ request }) => {
+  const url = new URL(request.url);
+  const paramGarment = url.searchParams.get("garment");
+  if (paramGarment && GARMENTS[paramGarment]) {
+    return { garment: paramGarment };
+  }
   const cookie = request.headers.get("cookie") || "";
   const match = cookie.match(/(?:^|;\s*)builder_garment=([^;]+)/);
-  const garment = match ? decodeURIComponent(match[1]) : null;
-  return { garment: garment && GARMENTS[garment] ? garment : "PC450" };
+  const cookieGarment = match ? decodeURIComponent(match[1]) : null;
+  return { garment: cookieGarment && GARMENTS[cookieGarment] ? cookieGarment : "PC450" };
 };
 
 async function uploadArtworkFile(admin, file, label) {
@@ -289,8 +294,7 @@ export default function BulkBuilder() {
                     if (el && !el.dataset.bound) {
                       el.dataset.bound = "1";
                       el.addEventListener("change", () => {
-                        document.cookie = `builder_garment=${encodeURIComponent(el.value)}; Path=/; Max-Age=86400; SameSite=Lax`;
-                        window.location.reload();
+                        window.location.search = `?garment=${encodeURIComponent(el.value)}`;
                       });
                     }
                   }} style={selectStyle}>
