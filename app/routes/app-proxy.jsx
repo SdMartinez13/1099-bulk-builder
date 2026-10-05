@@ -293,10 +293,7 @@ export default function BulkBuilder() {
                   <select name="garment" defaultValue={garment} ref={(el) => {
                     if (el && !el.dataset.bound) {
                       el.dataset.bound = "1";
-                      el.addEventListener("change", () => {
-                        document.cookie = `builder_garment=${encodeURIComponent(el.value)}; Path=/; Max-Age=86400; SameSite=Lax`;
-                        window.location.reload();
-                      });
+                      el.setAttribute("onchange", "window.location.search='?garment='+encodeURIComponent(this.value)");
                     }
                   }} style={selectStyle}>
                     {Object.entries(GARMENTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
