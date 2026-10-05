@@ -23,6 +23,8 @@ export const DTF_PRICES = {
 };
 
 export const SIZES = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
+export const SMALL_RUN_MAX_QUANTITY = 11;
+export const SMALL_RUN_MINIMUM = 75;
 
 // Width options per placement. Capped at 13" for the A3+ film on the
 // modified Epson 8550 DTF setup.
@@ -203,12 +205,21 @@ export function calculateOrder({ sizes, prints, printWidth, printLocation = "Fro
     return { key: p.key, label: p.label, width, rate, subtotal };
   });
 
+  const calculatedTotal = garments + dtf;
+  const smallRunMinimumApplies = quantity <= SMALL_RUN_MAX_QUANTITY;
+  const total = smallRunMinimumApplies ? Math.max(calculatedTotal, SMALL_RUN_MINIMUM) : calculatedTotal;
+  const minimumAdjustment = total - calculatedTotal;
+
   return {
     quantity,
     sizes: cleanSizes,
     garments,
     dtf,
-    total: garments + dtf,
+    calculatedTotal,
+    total,
+    minimumAdjustment,
+    smallRunMinimumApplies,
+    smallRunMinimum: smallRunMinimumApplies ? SMALL_RUN_MINIMUM : 0,
     tier: tierName,
     prints: printDetails,
     // Backwards-compatible fields for single-print callers:
