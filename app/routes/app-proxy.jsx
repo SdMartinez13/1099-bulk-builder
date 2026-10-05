@@ -294,7 +294,8 @@ export default function BulkBuilder() {
                     if (el && !el.dataset.bound) {
                       el.dataset.bound = "1";
                       el.addEventListener("change", () => {
-                        window.location.search = `?garment=${encodeURIComponent(el.value)}`;
+                        document.cookie = `builder_garment=${encodeURIComponent(el.value)}; Path=/; Max-Age=86400; SameSite=Lax`;
+                        window.location.reload();
                       });
                     }
                   }} style={selectStyle}>
