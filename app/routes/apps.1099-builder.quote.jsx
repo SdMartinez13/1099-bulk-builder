@@ -89,7 +89,15 @@ export const action = async ({ request }) => {
     }
 
     const prints = normalizePrints(submittedPrints);
-    const quote = calculateOrder({ sizes, prints, garment, color, markup: 2 });
+
+    let quote;
+    try {
+      quote = calculateOrder({ sizes, prints, garment, color, markup: 2 });
+    } catch (error) {
+      throw new QuoteInputError(
+        error instanceof Error ? error.message : "Invalid pricing request.",
+      );
+    }
 
     return Response.json(
       { ok: true, pricing: pricingPayload(quote) },
@@ -102,9 +110,7 @@ export const action = async ({ request }) => {
     console.error("APP PROXY QUOTE ERROR:", error);
     const message = error instanceof QuoteInputError
       ? error.message
-      : error instanceof Error && error.message
-        ? error.message
-        : "We couldn’t calculate your estimate. Please try again.";
+      : "We couldn’t calculate your estimate. Please try again.";
 
     return Response.json(
       { ok: false, error: message },
