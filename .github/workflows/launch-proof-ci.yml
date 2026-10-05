@@ -12,7 +12,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -24,8 +24,8 @@ jobs:
           node-version: '22.18.0'
           cache: npm
 
-      - name: Install root app dependencies
-        run: npm ci --workspaces=false
+      - name: Install dependencies for verification
+        run: npm install --package-lock=false --no-audit --no-fund
 
       - name: Typecheck
         run: npm run typecheck
