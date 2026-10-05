@@ -51,6 +51,6 @@ redirect_urls = [ "https://one099-bulk-builder.onrender.com/api/auth" ]
 automatically_update_urls_on_dev = false
 
 [app_proxy]
-url = "/app-proxy"
+url = "/apps/1099-builder"
 subpath = "1099-builder"
 prefix = "apps"
