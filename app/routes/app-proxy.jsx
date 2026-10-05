@@ -11,8 +11,9 @@ import {
 } from "../garment-config";
 
 export const loader = async ({ request }) => {
-  const url = new URL(request.url);
-  const garment = url.searchParams.get("garment");
+  const cookie = request.headers.get("cookie") || "";
+  const match = cookie.match(/(?:^|;\s*)builder_garment=([^;]+)/);
+  const garment = match ? decodeURIComponent(match[1]) : null;
   return { garment: garment && GARMENTS[garment] ? garment : "PC450" };
 };
 
@@ -284,26 +285,20 @@ export default function BulkBuilder() {
               <h2 style={{ margin: "7px 0 18px", fontSize: 25 }}>Choose your garment</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
                 <label style={fieldLabelStyle}>Style
-                  <select name="garment" value={garment} onChange={(e) => {
-                    const g = e.target.value;
-                    const newColors = GARMENTS[g].colors;
-                    setGarment(g);
-                    setColors(newColors);
-                    setColor(newColors[0]);
-                    // Direct DOM update as backup (iframe proxy can swallow React re-renders)
-                    requestAnimationFrame(() => {
-                      const sel = document.querySelector('select[name="color"]');
-                      if (sel) {
-                        sel.innerHTML = newColors.map((c) => `<option value="${c}">${c}</option>`).join("");
-                        sel.value = newColors[0];
-                      }
-                    });
+                  <select name="garment" defaultValue={garment} ref={(el) => {
+                    if (el && !el.dataset.bound) {
+                      el.dataset.bound = "1";
+                      el.addEventListener("change", () => {
+                        document.cookie = `builder_garment=${encodeURIComponent(el.value)}; Path=/; Max-Age=86400; SameSite=Lax`;
+                        window.location.reload();
+                      });
+                    }
                   }} style={selectStyle}>
                     {Object.entries(GARMENTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
                   </select>
                 </label>
                 <label style={fieldLabelStyle}>Color
-                  <select name="color" value={color} onChange={(e) => setColor(e.target.value)} style={selectStyle}>
+                  <select name="color" defaultValue={color} style={selectStyle}>
                     {colors.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </label>
