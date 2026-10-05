@@ -193,7 +193,13 @@ export default function BulkBuilder() {
 
   useEffect(() => {
     if (fetcher.data?.ok && fetcher.data?.invoiceUrl) {
-      window.location.assign(fetcher.data.invoiceUrl);
+      const url = fetcher.data.invoiceUrl;
+      try {
+        if (window.top && window.top !== window.self) window.top.location.assign(url);
+        else window.location.assign(url);
+      } catch {
+        window.location.assign(url);
+      }
     }
   }, [fetcher.data]);
 
