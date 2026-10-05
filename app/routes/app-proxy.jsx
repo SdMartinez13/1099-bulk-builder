@@ -285,20 +285,16 @@ export default function BulkBuilder() {
           </section>
         ) : (
           <form onSubmit={submit} encType="multipart/form-data">
+            <input type="hidden" name="garment" value={garment} />
             <section style={{ padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
               <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>01</div>
               <h2 style={{ margin: "7px 0 18px", fontSize: 25 }}>Choose your garment</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
-                <label style={fieldLabelStyle}>Style
-                  <select name="garment" defaultValue={garment} ref={(el) => {
-                    if (el && !el.dataset.bound) {
-                      el.dataset.bound = "1";
-                      el.setAttribute("onchange", "window.location.search='?garment='+encodeURIComponent(this.value)");
-                    }
-                  }} style={selectStyle}>
-                    {Object.entries(GARMENTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
-                  </select>
-                </label>
+                <div>
+                  <div style={fieldLabelStyle}>Style</div>
+                  <div style={{ color: "#f5f5f5", fontSize: 15, padding: "10px 0" }}>{GARMENTS[garment].label}</div>
+                  <div style={{ color: "#737373", fontSize: 12 }}>To change style, use the selector below the order form.</div>
+                </div>
                 <label style={fieldLabelStyle}>Color
                   <select name="color" defaultValue={color} style={selectStyle}>
                     {colors.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -368,6 +364,19 @@ export default function BulkBuilder() {
             </section>
           </form>
         )}
+
+        {/* Standalone garment changer - pure HTML, no JavaScript */}
+        <section style={{ marginTop: 24, padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
+          <h3 style={{ margin: "0 0 12px", fontSize: 18 }}>Change garment style</h3>
+          <form method="get" style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
+            <label style={{ ...fieldLabelStyle, flex: "1", minWidth: 240 }}>Style
+              <select name="garment" defaultValue={garment} style={selectStyle}>
+                {Object.entries(GARMENTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
+              </select>
+            </label>
+            <button type="submit" style={{ padding: "12px 24px", background: "#ef233c", color: "#fff", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>Update Colors</button>
+          </form>
+        </section>
       </div>
     </main>
   );
