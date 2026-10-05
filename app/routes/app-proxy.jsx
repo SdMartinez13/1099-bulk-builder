@@ -72,8 +72,9 @@ export const action = async ({ request }) => {
 
     const artworkSlots = [
       { key: "front", label: "Full front", field: "artwork_front" },
-      { key: "chest", label: "Chest", field: "artwork_chest" },
-      { key: "back", label: "Back", field: "artwork_back" },
+      { key: "chest_left", label: "Left chest", field: "artwork_chest_left" },
+      { key: "chest_right", label: "Right chest", field: "artwork_chest_right" },
+      { key: "back", label: "Full back", field: "artwork_back" },
     ];
     const uploadedArtwork = [];
     for (const slot of artworkSlots) {
@@ -169,7 +170,8 @@ const fieldLabelStyle = { display: "block", color: "#a3a3a3", fontSize: 13, font
 
 const PLACEMENT_DEFS = [
   { key: "front", label: "Full front", widths: FRONT_WIDTHS, note: "Up to 13 in wide" },
-  { key: "chest", label: "Left / Right chest", widths: CHEST_WIDTHS, sides: ["Left", "Right"], note: "2.5–4 in" },
+  { key: "chest_left", label: "Left chest", widths: CHEST_WIDTHS, note: "2.5–4 in" },
+  { key: "chest_right", label: "Right chest", widths: CHEST_WIDTHS, note: "2.5–4 in" },
   { key: "back", label: "Full back", widths: BACK_WIDTHS, note: "Up to 13 in wide" },
 ];
 
@@ -180,10 +182,11 @@ export default function BulkBuilder() {
   const [sizes, setSizes] = useState(Object.fromEntries(SIZES.map((size) => [size, 0])));
   const [prints, setPrints] = useState({
     front: { enabled: false, width: "" },
-    chest: { enabled: false, width: "", side: "Left" },
+    chest_left: { enabled: false, width: "" },
+    chest_right: { enabled: false, width: "" },
     back: { enabled: false, width: "" },
   });
-  const [fileNames, setFileNames] = useState({ front: "", chest: "", back: "" });
+  const [fileNames, setFileNames] = useState({ front: "", chest_left: "", chest_right: "", back: "" });
 
   const config = GARMENTS[garment];
   const colors = config.colors;
@@ -202,7 +205,8 @@ export default function BulkBuilder() {
   const activePrints = useMemo(() => {
     const list = [];
     if (prints.front.enabled && prints.front.width) list.push({ key: "front", label: "Full front", width: prints.front.width });
-    if (prints.chest.enabled && prints.chest.width) list.push({ key: "chest", label: `${prints.chest.side} chest`, width: prints.chest.width });
+    if (prints.chest_left.enabled && prints.chest_left.width) list.push({ key: "chest_left", label: "Left chest", width: prints.chest_left.width });
+    if (prints.chest_right.enabled && prints.chest_right.width) list.push({ key: "chest_right", label: "Right chest", width: prints.chest_right.width });
     if (prints.back.enabled && prints.back.width) list.push({ key: "back", label: "Full back", width: prints.back.width });
     return list;
   }, [prints]);
@@ -283,7 +287,7 @@ export default function BulkBuilder() {
             <section style={{ marginTop: 16, padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
               <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>02</div>
               <h2 style={{ margin: "7px 0 6px", fontSize: 25 }}>Print placements</h2>
-              <p style={{ color: "#737373", fontSize: 13, margin: "0 0 18px" }}>Add up to three prints — each with its own size and artwork. Leave a placement off to skip it.</p>
+              <p style={{ color: "#737373", fontSize: 13, margin: "0 0 18px" }}>Add up to four prints — each with its own size and artwork. Leave a placement off to skip it.</p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))", gap: 12 }}>
                 {PLACEMENT_DEFS.map((def) => {
                   const state = prints[def.key];
@@ -296,14 +300,7 @@ export default function BulkBuilder() {
                       <div style={{ color: "#737373", fontSize: 12, margin: "6px 0 0 28px" }}>{def.note}</div>
                       {state.enabled && (
                         <div style={{ marginTop: 12 }}>
-                          {def.sides && (
-                            <label style={fieldLabelStyle}>Side
-                              <select value={state.side} onChange={(e) => updatePrint(def.key, { side: e.target.value })} style={selectStyle}>
-                                {def.sides.map((s) => <option key={s}>{s}</option>)}
-                              </select>
-                            </label>
-                          )}
-                          <label style={{ ...fieldLabelStyle, marginTop: def.sides ? 12 : 0 }}>Print size
+                          <label style={{ ...fieldLabelStyle, marginTop: 0 }}>Print size
                             <select value={state.width} onChange={(e) => updatePrint(def.key, { width: e.target.value })} style={selectStyle}>
                               <option value="">Choose size…</option>
                               {def.widths.map((w) => <option key={w} value={w}>{w} in</option>)}
