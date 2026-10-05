@@ -179,6 +179,7 @@ export default function BulkBuilder() {
   const fetcher = useFetcher();
   const [garment, setGarment] = useState("PC450");
   const [color, setColor] = useState("Athletic Heather");
+  const [colors, setColors] = useState(GARMENTS["PC450"].colors);
   const [sizes, setSizes] = useState(Object.fromEntries(SIZES.map((size) => [size, 0])));
   const [prints, setPrints] = useState({
     front: { width: "" },
@@ -189,7 +190,6 @@ export default function BulkBuilder() {
   const [fileNames, setFileNames] = useState({ front: "", chest_left: "", chest_right: "", back: "" });
 
   const config = GARMENTS[garment];
-  const colors = config.colors;
 
   useEffect(() => {
     if (fetcher.data?.ok && fetcher.data?.invoiceUrl) {
@@ -228,6 +228,7 @@ export default function BulkBuilder() {
 
   const updateGarment = (next) => {
     setGarment(next);
+    setColors(GARMENTS[next].colors);
     setColor(GARMENTS[next].colors[0]);
   };
 
@@ -283,7 +284,7 @@ export default function BulkBuilder() {
                   </select>
                 </label>
                 <label style={fieldLabelStyle}>Color
-                  <select key={garment} name="color" value={color} onChange={(e) => setColor(e.target.value)} style={selectStyle}>
+                  <select name="color" value={color} onChange={(e) => setColor(e.target.value)} style={selectStyle}>
                     {colors.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </label>
