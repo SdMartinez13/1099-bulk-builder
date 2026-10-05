@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useFetcher, useLoaderData } from "react-router";
+import { useFetcher } from "react-router";
 import { authenticate } from "../shopify.server";
 import {
   calculateOrder,
@@ -10,17 +10,7 @@ import {
   CHEST_WIDTHS,
 } from "../garment-config";
 
-export const loader = async ({ request }) => {
-  const url = new URL(request.url);
-  const paramGarment = url.searchParams.get("garment");
-  if (paramGarment && GARMENTS[paramGarment]) {
-    return { garment: paramGarment };
-  }
-  const cookie = request.headers.get("cookie") || "";
-  const match = cookie.match(/(?:^|;\s*)builder_garment=([^;]+)/);
-  const cookieGarment = match ? decodeURIComponent(match[1]) : null;
-  return { garment: cookieGarment && GARMENTS[cookieGarment] ? cookieGarment : "PC450" };
-};
+export const loader = async () => null;
 
 async function uploadArtworkFile(admin, file, label) {
   const stagedResponse = await admin.graphql(`#graphql
@@ -187,10 +177,8 @@ const PLACEMENT_DEFS = [
 
 export default function BulkBuilder() {
   const fetcher = useFetcher();
-  const { garment: initialGarment } = useLoaderData();
-  const [garment, setGarment] = useState(initialGarment);
-  const [color, setColor] = useState(GARMENTS[initialGarment].colors[0]);
-  const [colors, setColors] = useState(GARMENTS[initialGarment].colors);
+  const [garment, setGarment] = useState("PC450");
+  const [color, setColor] = useState("Athletic Heather");
   const [sizes, setSizes] = useState(Object.fromEntries(SIZES.map((size) => [size, 0])));
   const [prints, setPrints] = useState({
     front: { width: "" },
@@ -201,6 +189,7 @@ export default function BulkBuilder() {
   const [fileNames, setFileNames] = useState({ front: "", chest_left: "", chest_right: "", back: "" });
 
   const config = GARMENTS[garment];
+  const colors = config.colors;
 
   useEffect(() => {
     if (fetcher.data?.ok && fetcher.data?.invoiceUrl) {
@@ -239,7 +228,6 @@ export default function BulkBuilder() {
 
   const updateGarment = (next) => {
     setGarment(next);
-    setColors(GARMENTS[next].colors);
     setColor(GARMENTS[next].colors[0]);
   };
 
@@ -285,19 +273,18 @@ export default function BulkBuilder() {
           </section>
         ) : (
           <form onSubmit={submit} encType="multipart/form-data">
-            <input type="hidden" name="garment" value={garment} />
             <section style={{ padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
               <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>01</div>
               <h2 style={{ margin: "7px 0 18px", fontSize: 25 }}>Choose your garment</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
-                <div>
-                  <div style={fieldLabelStyle}>Style</div>
-                  <div style={{ color: "#f5f5f5", fontSize: 15, padding: "10px 0" }}>{GARMENTS[garment].label}</div>
-                  <div style={{ color: "#737373", fontSize: 12 }}>To change style, use the selector below the order form.</div>
-                </div>
+                <label style={fieldLabelStyle}>Style
+                  <select name="garment" value={garment} onChange={(e) => updateGarment(e.target.value)} style={selectStyle}>
+                    {Object.entries(GARMENTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
+                  </select>
+                </label>
                 <label style={fieldLabelStyle}>Color
-                  <select name="color" defaultValue={color} style={selectStyle}>
-                    {colors.map((c) => <option key={c} value={c}>{c}</option>)}
+                  <select name="color" value={color} onChange={(e) => setColor(e.target.value)} style={selectStyle}>
+                    {colors.map((c) => <option key={c}>{c}</option>)}
                   </select>
                 </label>
               </div>
@@ -364,19 +351,6 @@ export default function BulkBuilder() {
             </section>
           </form>
         )}
-
-        {/* Standalone garment changer - pure HTML, no JavaScript */}
-        <section style={{ marginTop: 24, padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
-          <h3 style={{ margin: "0 0 12px", fontSize: 18 }}>Change garment style</h3>
-          <form method="get" style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
-            <label style={{ ...fieldLabelStyle, flex: "1", minWidth: 240 }}>Style
-              <select name="garment" defaultValue={garment} style={selectStyle}>
-                {Object.entries(GARMENTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
-              </select>
-            </label>
-            <button type="submit" style={{ padding: "12px 24px", background: "#ef233c", color: "#fff", border: "none", borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>Update Colors</button>
-          </form>
-        </section>
       </div>
     </main>
   );
