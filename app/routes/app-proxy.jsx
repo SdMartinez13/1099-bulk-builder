@@ -283,8 +283,8 @@ export default function BulkBuilder() {
                   </select>
                 </label>
                 <label style={fieldLabelStyle}>Color
-                  <select name="color" value={color} onChange={(e) => setColor(e.target.value)} style={selectStyle}>
-                    {colors.map((c) => <option key={c}>{c}</option>)}
+                  <select key={garment} name="color" value={color} onChange={(e) => setColor(e.target.value)} style={selectStyle}>
+                    {colors.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </label>
               </div>
