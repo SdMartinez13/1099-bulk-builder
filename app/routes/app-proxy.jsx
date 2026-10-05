@@ -284,7 +284,21 @@ export default function BulkBuilder() {
               <h2 style={{ margin: "7px 0 18px", fontSize: 25 }}>Choose your garment</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
                 <label style={fieldLabelStyle}>Style
-                  <select name="garment" value={garment} onChange={(e) => { window.location.href = `?garment=${e.target.value}`; }} style={selectStyle}>
+                  <select name="garment" value={garment} onChange={(e) => {
+                    const g = e.target.value;
+                    const newColors = GARMENTS[g].colors;
+                    setGarment(g);
+                    setColors(newColors);
+                    setColor(newColors[0]);
+                    // Direct DOM update as backup (iframe proxy can swallow React re-renders)
+                    requestAnimationFrame(() => {
+                      const sel = document.querySelector('select[name="color"]');
+                      if (sel) {
+                        sel.innerHTML = newColors.map((c) => `<option value="${c}">${c}</option>`).join("");
+                        sel.value = newColors[0];
+                      }
+                    });
+                  }} style={selectStyle}>
                     {Object.entries(GARMENTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
                   </select>
                 </label>
