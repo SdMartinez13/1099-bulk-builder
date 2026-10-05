@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { authenticate } from "../shopify.server";
 import {
   calculateOrder,
@@ -10,7 +10,11 @@ import {
   CHEST_WIDTHS,
 } from "../garment-config";
 
-export const loader = async () => null;
+export const loader = async ({ request }) => {
+  const url = new URL(request.url);
+  const garment = url.searchParams.get("garment");
+  return { garment: garment && GARMENTS[garment] ? garment : "PC450" };
+};
 
 async function uploadArtworkFile(admin, file, label) {
   const stagedResponse = await admin.graphql(`#graphql
@@ -177,9 +181,10 @@ const PLACEMENT_DEFS = [
 
 export default function BulkBuilder() {
   const fetcher = useFetcher();
-  const [garment, setGarment] = useState("PC450");
-  const [color, setColor] = useState("Athletic Heather");
-  const [colors, setColors] = useState(GARMENTS["PC450"].colors);
+  const { garment: initialGarment } = useLoaderData();
+  const [garment, setGarment] = useState(initialGarment);
+  const [color, setColor] = useState(GARMENTS[initialGarment].colors[0]);
+  const [colors, setColors] = useState(GARMENTS[initialGarment].colors);
   const [sizes, setSizes] = useState(Object.fromEntries(SIZES.map((size) => [size, 0])));
   const [prints, setPrints] = useState({
     front: { width: "" },
@@ -279,7 +284,7 @@ export default function BulkBuilder() {
               <h2 style={{ margin: "7px 0 18px", fontSize: 25 }}>Choose your garment</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
                 <label style={fieldLabelStyle}>Style
-                  <select name="garment" value={garment} onChange={(e) => updateGarment(e.target.value)} style={selectStyle}>
+                  <select name="garment" value={garment} onChange={(e) => { window.location.href = `?garment=${e.target.value}`; }} style={selectStyle}>
                     {Object.entries(GARMENTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
                   </select>
                 </label>
