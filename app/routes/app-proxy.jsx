@@ -480,7 +480,7 @@ export default function BulkBuilder() {
                 </div>
                 <div style={{ fontSize: 13, lineHeight: 1.7 }}>
                   <div><strong>Prints:</strong> {quote.prints.length || 0}</div>
-                  {quote.prints.map((p) => <div key={p.key}>{p.label}: {p.width}"</div>)}
+                  {quote.prints.map((p) => <div key={p.key}>{p.label}: {p.width}&quot;</div>)}
                 </div>
                 <div style={{ fontSize: 13, lineHeight: 1.7 }}>
                   <div><strong>Name:</strong> {contact.name || "—"}</div>
@@ -499,7 +499,7 @@ export default function BulkBuilder() {
                 <div style={{ fontSize: 13, color: "#525252", lineHeight: 1.7 }}>
                   <div>Garments: <strong>{money(quote.garments)}</strong></div>
                   {quote.prints.map((p) => (
-                    <div key={p.key}>{p.label} ({p.width}"): <strong>{money(p.subtotal)}</strong> <span style={{ color: "#737373" }}>@ {money(p.rate)}/print</span></div>
+                    <div key={p.key}>{p.label} ({p.width}&quot;): <strong>{money(p.subtotal)}</strong> <span style={{ color: "#737373" }}>@ {money(p.rate)}/print</span></div>
                   ))}
                   <div>DTF printing: <strong>{money(quote.dtf)}</strong></div>
                   {quote.minimumAdjustment > 0 && (
