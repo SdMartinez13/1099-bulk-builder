@@ -16,6 +16,7 @@ export const loader = async () => null;
 const MAX_ARTWORK_BYTES = 25 * 1024 * 1024;
 const ALLOWED_ARTWORK_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const ALLOWED_ARTWORK_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
+const APPROVED_LOGO_URL = "https://cdn.shopify.com/s/files/1/0760/5046/4923/files/1099_APPROVED_C_WHITE_RED_TRANSPARENT_FIX2_3840px.png?v=1790347989";
 
 const PLACEMENT_RULES = [
   { key: "chest_left", label: "Left chest", field: "artwork_chest_left", widths: CHEST_WIDTHS, note: "2.5–4 in" },
@@ -352,6 +353,7 @@ export default function BulkBuilder() {
     <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#f5f5f5", fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif", padding: "40px 20px 70px" }}>
       <div style={{ maxWidth: 1040, margin: "0 auto" }}>
         <header style={{ marginBottom: 34 }}>
+          <img src={APPROVED_LOGO_URL} alt="1099 Designs" style={{ display: "block", width: "min(320px, 72vw)", height: "auto", marginBottom: 18 }} />
           <div style={{ color: "#ef233c", fontSize: 12, letterSpacing: 3, fontWeight: 900 }}>1099 DESIGNS / CUSTOM APPAREL</div>
           <h1 style={{ fontSize: "clamp(34px, 6vw, 58px)", lineHeight: 1.02, margin: "10px 0 12px", letterSpacing: -2 }}>Build Your Custom Apparel Order</h1>
           <p style={{ margin: 0, color: "#a3a3a3", fontSize: 16 }}>Build your order, upload your artwork, and receive an estimated subtotal before submitting for proof.</p>
