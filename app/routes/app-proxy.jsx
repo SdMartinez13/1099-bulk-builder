@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useFetcher, useLoaderData } from "react-router";
 import { AppProxyProvider } from "@shopify/shopify-app-react-router/react";
-import { authenticate } from "../shopify.server";
+import shopify, { authenticate } from "../shopify.server";
 import {
   calculateOrder,
   GARMENTS,
@@ -14,7 +14,7 @@ import {
 
 export const loader = async ({ request }) => {
   await authenticate.public.appProxy(request);
-  return { appUrl: process.env.SHOPIFY_APP_URL };
+  return { appUrl: shopify.config.appUrl };
 };
 
 const MAX_ARTWORK_BYTES = 25 * 1024 * 1024;
