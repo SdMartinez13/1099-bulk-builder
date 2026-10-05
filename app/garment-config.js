@@ -3,6 +3,7 @@ export const PRINT_WIDTHS = ["1.5", "2", "3", "3.5", "4", "5", "6", "7", "8", "9
 export const DTF_PRICES = {
   "1.5": [1, .8, .65, .55, .45],
   "2": [1.5, 1.2, .98, .83, .68],
+  "2.5": [1.75, 1.4, 1.14, 0.97, 0.79],
   "3": [2, 1.6, 1.3, 1.1, .9],
   "3.5": [2.25, 1.8, 1.46, 1.24, 1.01],
   "4": [2.5, 2, 1.63, 1.38, 1.13],
@@ -22,6 +23,12 @@ export const DTF_PRICES = {
 };
 
 export const SIZES = ["S", "M", "L", "XL", "2XL", "3XL", "4XL"];
+
+// Width options per placement. Capped at 13" for the A3+ film on the
+// modified Epson 8550 DTF setup.
+export const FRONT_WIDTHS = PRINT_WIDTHS.filter((w) => Number(w) <= 13);
+export const BACK_WIDTHS = PRINT_WIDTHS.filter((w) => Number(w) <= 13);
+export const CHEST_WIDTHS = ["2.5", "3", "3.5", "4"];
 
 // Blank-cost baseline for the Gildan 18500 hoodie. Centralized so sourcing
 // costs can be changed in one place without touching the UI or checkout code.
@@ -148,12 +155,8 @@ export function getVariantId(garment, color, sizes = {}) {
   return config.variantIds[`${color}:${size}`] || null;
 }
 
-export function calculateOrder({ sizes, printWidth, printLocation = "Front", garment = "PC450", color = "Athletic Heather", markup = 2 }) {
+export function calculateOrder({ sizes, prints, printWidth, printLocation = "Front", garment = "PC450", color = "Athletic Heather", markup = 2 }) {
   if (!sizes || typeof sizes !== "object") throw new Error("Sizes are required.");
-
-  const width = String(printWidth);
-  if (!DTF_PRICES[width]) throw new Error("Invalid print width.");
-  if (!["Front", "Back", "Front + Back"].includes(printLocation)) throw new Error("Invalid print location.");
 
   const config = GARMENTS[garment];
   const sizeCosts = config?.costs?.[color];
@@ -176,10 +179,29 @@ export function calculateOrder({ sizes, printWidth, printLocation = "Front", gar
 
   if (quantity < 1) throw new Error("Order must contain at least one garment.");
 
+  // Normalize prints. New-style callers pass prints: [{ key, label, width }].
+  // Old-style callers pass printWidth/printLocation; convert for compatibility.
+  let normalized = prints;
+  if (!normalized) {
+    const width = String(printWidth);
+    normalized = printLocation === "Front + Back"
+      ? [{ key: "front", label: "Front", width }, { key: "back", label: "Back", width }]
+      : [{ key: "single", label: printLocation, width }];
+  }
+  if (!Array.isArray(normalized) || normalized.length < 1) {
+    throw new Error("Select at least one print placement.");
+  }
+
   const [tierIndex, tierName] = getTier(quantity);
-  const rate = DTF_PRICES[width][tierIndex];
-  const printsPerGarment = printLocation === "Front + Back" ? 2 : 1;
-  const dtf = quantity * rate * printsPerGarment;
+  let dtf = 0;
+  const printDetails = normalized.map((p) => {
+    const width = String(p.width);
+    if (!DTF_PRICES[width]) throw new Error(`Invalid print width: ${width}`);
+    const rate = DTF_PRICES[width][tierIndex];
+    const subtotal = quantity * rate;
+    dtf += subtotal;
+    return { key: p.key, label: p.label, width, rate, subtotal };
+  });
 
   return {
     quantity,
@@ -187,9 +209,11 @@ export function calculateOrder({ sizes, printWidth, printLocation = "Front", gar
     garments,
     dtf,
     total: garments + dtf,
-    rate,
     tier: tierName,
-    printsPerGarment,
-    printLocation,
+    prints: printDetails,
+    // Backwards-compatible fields for single-print callers:
+    rate: printDetails[0]?.rate ?? 0,
+    printsPerGarment: printDetails.length,
+    printLocation: printDetails.map((p) => p.label).join(" + "),
   };
 }
