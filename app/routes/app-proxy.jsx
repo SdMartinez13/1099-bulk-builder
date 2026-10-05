@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
+import { AppProxyProvider } from "@shopify/shopify-app-react-router/react";
 import { authenticate } from "../shopify.server";
 import {
   calculateOrder,
@@ -11,7 +12,10 @@ import {
   SMALL_RUN_MINIMUM,
 } from "../garment-config";
 
-export const loader = async () => null;
+export const loader = async ({ request }) => {
+  await authenticate.public.appProxy(request);
+  return { appUrl: process.env.SHOPIFY_APP_URL };
+};
 
 const MAX_ARTWORK_BYTES = 25 * 1024 * 1024;
 const ALLOWED_ARTWORK_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
@@ -252,6 +256,7 @@ const fieldLabelStyle = { display: "block", color: "#a3a3a3", fontSize: 13, font
 
 export default function BulkBuilder() {
   const fetcher = useFetcher();
+  const { appUrl } = useLoaderData();
   const [garment, setGarment] = useState("PC450");
   const [color, setColor] = useState("Athletic Heather");
   const [sizes, setSizes] = useState(Object.fromEntries(SIZES.map((size) => [size, 0])));
@@ -341,7 +346,7 @@ export default function BulkBuilder() {
     const fd = new FormData(e.currentTarget);
     fd.set("sizes", JSON.stringify(sizes));
     fd.set("prints", JSON.stringify(activePrints));
-    const action = `/apps/1099-builder${window.location.search}`;
+    const action = `${window.location.origin}${window.location.pathname}${window.location.search}`;
     fetcher.submit(fd, { method: "post", action, encType: "multipart/form-data" });
   };
 
@@ -350,189 +355,191 @@ export default function BulkBuilder() {
   const isSmallRun = garmentCount >= 1 && garmentCount <= 11;
 
   return (
-    <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#f5f5f5", fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif", padding: "40px 20px 70px" }}>
-      <div style={{ maxWidth: 1040, margin: "0 auto" }}>
-        <header style={{ marginBottom: 34 }}>
-          <img src={APPROVED_LOGO_URL} alt="1099 Designs" style={{ display: "block", width: "min(320px, 72vw)", height: "auto", marginBottom: 18 }} />
-          <div style={{ color: "#ef233c", fontSize: 12, letterSpacing: 3, fontWeight: 900 }}>1099 DESIGNS / CUSTOM APPAREL</div>
-          <h1 style={{ fontSize: "clamp(34px, 6vw, 58px)", lineHeight: 1.02, margin: "10px 0 12px", letterSpacing: -2 }}>Build Your Custom Apparel Order</h1>
-          <p style={{ margin: 0, color: "#a3a3a3", fontSize: 16 }}>Build your order, upload your artwork, and receive an estimated subtotal before submitting for proof.</p>
-        </header>
+    <AppProxyProvider appUrl={appUrl}>
+      <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#f5f5f5", fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif", padding: "40px 20px 70px" }}>
+        <div style={{ maxWidth: 1040, margin: "0 auto" }}>
+          <header style={{ marginBottom: 34 }}>
+            <img src={APPROVED_LOGO_URL} alt="1099 Designs" style={{ display: "block", width: "min(320px, 72vw)", height: "auto", marginBottom: 18 }} />
+            <div style={{ color: "#ef233c", fontSize: 12, letterSpacing: 3, fontWeight: 900 }}>1099 DESIGNS / CUSTOM APPAREL</div>
+            <h1 style={{ fontSize: "clamp(34px, 6vw, 58px)", lineHeight: 1.02, margin: "10px 0 12px", letterSpacing: -2 }}>Build Your Custom Apparel Order</h1>
+            <p style={{ margin: 0, color: "#a3a3a3", fontSize: 16 }}>Build your order, upload your artwork, and receive an estimated subtotal before submitting for proof.</p>
+          </header>
 
-        {fetcher.data?.ok ? (
-          <section style={{ padding: 30, border: "1px solid #22c55e", borderRadius: 16, background: "#0d1b12" }}>
-            <div style={{ color: "#4ade80", fontSize: 12, letterSpacing: 2, fontWeight: 800 }}>ORDER REQUEST RECEIVED</div>
-            <h2 style={{ fontSize: 30, margin: "8px 0" }}>Order Request Received ✓</h2>
-            <p style={{ color: "#d4d4d4", lineHeight: 1.7, maxWidth: 760 }}>Thanks! We’ll review your artwork and prepare your proof. Once you approve the proof, we’ll confirm garment availability and send your final invoice with a secure payment link.</p>
-            <p style={{ color: "#a3a3a3", marginBottom: 0 }}>
-              Reference: <strong style={{ color: "#fff" }}>{fetcher.data.draftOrder?.name}</strong> · {fetcher.data.pricing?.quantity} garments · estimated subtotal {money(fetcher.data.pricing?.total)}
-            </p>
-            <p style={{ color: "#d4d4d4", margin: "24px 0 12px" }}>While we work on your proof, check out the rest of our stuff.</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-              <a href="/pages/low-morale-apparel" target="_top" style={{ display: "inline-block", padding: "12px 18px", borderRadius: 9, background: "#f5f5f5", color: "#111", textDecoration: "none", fontWeight: 900 }}>Shop Low Morale Apparel →</a>
-              <a href="/" target="_top" style={{ color: "#d4d4d4", fontWeight: 800, textDecoration: "underline", textUnderlineOffset: 3 }}>Back to 1099 Designs</a>
-            </div>
-          </section>
-        ) : (
-          <form onSubmit={submit} encType="multipart/form-data">
-            <section style={{ padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
-              <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>01</div>
-              <h2 style={{ margin: "7px 0 18px", fontSize: 25 }}>Choose your garment</h2>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
-                <label style={fieldLabelStyle}>Style
-                  <select name="garment" value={garment} onChange={(e) => updateGarment(e.target.value)} style={selectStyle}>
-                    {Object.entries(GARMENTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
-                  </select>
-                </label>
-                <label style={fieldLabelStyle}>Color
-                  <select name="color" value={color} onChange={(e) => setColor(e.target.value)} style={selectStyle}>
-                    {colors.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </label>
+          {fetcher.data?.ok ? (
+            <section style={{ padding: 30, border: "1px solid #22c55e", borderRadius: 16, background: "#0d1b12" }}>
+              <div style={{ color: "#4ade80", fontSize: 12, letterSpacing: 2, fontWeight: 800 }}>ORDER REQUEST RECEIVED</div>
+              <h2 style={{ fontSize: 30, margin: "8px 0" }}>Order Request Received ✓</h2>
+              <p style={{ color: "#d4d4d4", lineHeight: 1.7, maxWidth: 760 }}>Thanks! We’ll review your artwork and prepare your proof. Once you approve the proof, we’ll confirm garment availability and send your final invoice with a secure payment link.</p>
+              <p style={{ color: "#a3a3a3", marginBottom: 0 }}>
+                Reference: <strong style={{ color: "#fff" }}>{fetcher.data.draftOrder?.name}</strong> · {fetcher.data.pricing?.quantity} garments · estimated subtotal {money(fetcher.data.pricing?.total)}
+              </p>
+              <p style={{ color: "#d4d4d4", margin: "24px 0 12px" }}>While we work on your proof, check out the rest of our stuff.</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+                <a href="https://1099designs.com/pages/low-morale-apparel" target="_top" style={{ display: "inline-block", padding: "12px 18px", borderRadius: 9, background: "#f5f5f5", color: "#111", textDecoration: "none", fontWeight: 900 }}>Shop Low Morale Apparel →</a>
+                <a href="https://1099designs.com/" target="_top" style={{ color: "#d4d4d4", fontWeight: 800, textDecoration: "underline", textUnderlineOffset: 3 }}>Back to 1099 Designs</a>
               </div>
             </section>
-
-            <section style={{ marginTop: 16, padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
-              <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>02</div>
-              <h2 style={{ margin: "7px 0 6px", fontSize: 25 }}>Print placements</h2>
-              <p style={{ color: "#737373", fontSize: 13, margin: "0 0 6px" }}>Add up to four prints — each with its own size and artwork. Leave a placement blank to skip it.</p>
-              <p style={{ color: "#a3a3a3", fontSize: 12, margin: "0 0 18px" }}>Left and right chest are based on the wearer’s left and right.</p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))", gap: 12 }}>
-                {PLACEMENT_RULES.map((def) => {
-                  const state = prints[def.key];
-                  const file = fileInfo[def.key];
-                  return (
-                    <div key={def.key} style={{ padding: 18, border: `1px solid ${state.width ? "#ef233c" : "#2b2b2b"}`, borderRadius: 12, background: "#161616" }}>
-                      <div style={{ fontWeight: 800, fontSize: 15 }}>{def.label}</div>
-                      <div style={{ color: "#737373", fontSize: 12, margin: "6px 0 0" }}>{def.note}</div>
-                      <div style={{ marginTop: 12 }}>
-                        <label style={{ ...fieldLabelStyle, marginTop: 0 }}>Print size
-                          <select value={state.width} onChange={(e) => updatePrint(def.key, { width: e.target.value })} style={selectStyle}>
-                            <option value="">Choose size…</option>
-                            {def.widths.map((w) => <option key={w} value={w}>{w} in</option>)}
-                          </select>
-                        </label>
-                        <label style={{ ...fieldLabelStyle, marginTop: 12 }}>Artwork
-                          <input
-                            name={def.field}
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp"
-                            onChange={(e) => setFileInfo((current) => ({ ...current, [def.key]: e.target.files?.[0] || null }))}
-                            style={{ width: "100%", padding: 12, boxSizing: "border-box", background: "#191919", color: "#ddd", border: "1px dashed #555", borderRadius: 9, marginTop: 7 }}
-                          />
-                        </label>
-                        <p style={{ color: "#737373", fontSize: 12, marginBottom: 0 }}>{file ? `Selected: ${file.name}` : "PNG, JPG, or WebP · 25 MB max · transparent PNG recommended."}</p>
-                        {state.width && !file && <p style={{ color: "#f59e0b", fontSize: 12, fontWeight: 700, marginBottom: 0 }}>Artwork is required for this selected placement.</p>}
-                        {!state.width && file && <p style={{ color: "#f59e0b", fontSize: 12, fontWeight: 700, marginBottom: 0 }}>Choose a print size to include this artwork.</p>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section style={{ marginTop: 16, padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
-              <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>03</div>
-              <h2 style={{ margin: "7px 0 18px", fontSize: 25 }}>Sizes & quantities</h2>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(92px,1fr))", gap: 10 }}>
-                {SIZES.map((size) => (
-                  <label key={size} style={{ color: "#a3a3a3", fontSize: 12, fontWeight: 800 }}>{size}
-                    <input name={`size_${size}`} type="number" min="0" step="1" value={sizes[size]} onChange={(e) => updateSize(size, e.target.value)} style={{ display: "block", width: "100%", boxSizing: "border-box", padding: 12, marginTop: 6, background: "#191919", color: "#fff", border: "1px solid #3a3a3a", borderRadius: 9, fontSize: 16 }} />
+          ) : (
+            <form onSubmit={submit} encType="multipart/form-data">
+              <section style={{ padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
+                <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>01</div>
+                <h2 style={{ margin: "7px 0 18px", fontSize: 25 }}>Choose your garment</h2>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
+                  <label style={fieldLabelStyle}>Style
+                    <select name="garment" value={garment} onChange={(e) => updateGarment(e.target.value)} style={selectStyle}>
+                      {Object.entries(GARMENTS).map(([key, item]) => <option key={key} value={key}>{item.label}</option>)}
+                    </select>
                   </label>
-                ))}
-              </div>
-              <div style={{ marginTop: 16, paddingTop: 15, borderTop: "1px solid #292929", color: "#a3a3a3" }}>
-                <strong style={{ color: "#fff" }}>{garmentCount}</strong> total garments · current DTF tier <strong style={{ color: "#fff" }}>{quote.tier}</strong>
-                {isSmallRun && <span> · {money(SMALL_RUN_MINIMUM)} small-run minimum applies</span>}
-              </div>
-            </section>
-
-            <section style={{ marginTop: 16, padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
-              <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>04</div>
-              <h2 style={{ margin: "7px 0 6px", fontSize: 25 }}>Your information</h2>
-              <p style={{ color: "#737373", fontSize: 13, margin: "0 0 18px" }}>We’ll use your email to send your proof and final payment link after approval.</p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
-                <label style={fieldLabelStyle}>Name *
-                  <input name="customer_name" type="text" required value={contact.name} onChange={(e) => updateContact("name", e.target.value)} autoComplete="name" style={inputStyle} />
-                </label>
-                <label style={fieldLabelStyle}>Email *
-                  <input name="customer_email" type="email" required value={contact.email} onChange={(e) => updateContact("email", e.target.value)} autoComplete="email" style={inputStyle} />
-                </label>
-                <label style={fieldLabelStyle}>Phone
-                  <input name="customer_phone" type="tel" value={contact.phone} onChange={(e) => updateContact("phone", e.target.value)} autoComplete="tel" style={inputStyle} />
-                </label>
-                <label style={fieldLabelStyle}>Company / Organization
-                  <input name="customer_company" type="text" value={contact.company} onChange={(e) => updateContact("company", e.target.value)} autoComplete="organization" style={inputStyle} />
-                </label>
-              </div>
-            </section>
-
-            <section style={{ marginTop: 16, padding: 24, borderRadius: 16, background: "#f5f5f5", color: "#111" }}>
-              <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>05</div>
-              <h2 style={{ margin: "7px 0 18px", fontSize: 25 }}>Review your order</h2>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: 18 }}>
-                <div style={{ fontSize: 13, lineHeight: 1.7 }}>
-                  <div><strong>Garment:</strong> {GARMENTS[garment].label}</div>
-                  <div><strong>Color:</strong> {color}</div>
-                  <div><strong>Quantity:</strong> {garmentCount}</div>
-                  <div><strong>Sizes:</strong> {sizeSummary || "None yet"}</div>
+                  <label style={fieldLabelStyle}>Color
+                    <select name="color" value={color} onChange={(e) => setColor(e.target.value)} style={selectStyle}>
+                      {colors.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </label>
                 </div>
-                <div style={{ fontSize: 13, lineHeight: 1.7 }}>
-                  <div><strong>Prints:</strong> {quote.prints.length || 0}</div>
-                  {quote.prints.map((p) => <div key={p.key}>{p.label}: {p.width}&quot;</div>)}
-                </div>
-                <div style={{ fontSize: 13, lineHeight: 1.7 }}>
-                  <div><strong>Name:</strong> {contact.name || "—"}</div>
-                  <div><strong>Email:</strong> {contact.email || "—"}</div>
-                  {contact.phone && <div><strong>Phone:</strong> {contact.phone}</div>}
-                  {contact.company && <div><strong>Organization:</strong> {contact.company}</div>}
-                </div>
-              </div>
+              </section>
 
-              <div style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid #d4d4d4", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: 22, alignItems: "end" }}>
-                <div>
-                  <div style={{ color: "#737373", fontSize: 11, letterSpacing: 2, fontWeight: 900 }}>ESTIMATED ORDER SUBTOTAL</div>
-                  <div style={{ fontSize: 44, lineHeight: 1.05, fontWeight: 900, letterSpacing: -1 }}>{money(quote.total)}</div>
-                  <div style={{ color: "#737373", marginTop: 7 }}>Shipping and applicable tax are handled later at payment.</div>
+              <section style={{ marginTop: 16, padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
+                <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>02</div>
+                <h2 style={{ margin: "7px 0 6px", fontSize: 25 }}>Print placements</h2>
+                <p style={{ color: "#737373", fontSize: 13, margin: "0 0 6px" }}>Add up to four prints — each with its own size and artwork. Leave a placement blank to skip it.</p>
+                <p style={{ color: "#a3a3a3", fontSize: 12, margin: "0 0 18px" }}>Left and right chest are based on the wearer’s left and right.</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))", gap: 12 }}>
+                  {PLACEMENT_RULES.map((def) => {
+                    const state = prints[def.key];
+                    const file = fileInfo[def.key];
+                    return (
+                      <div key={def.key} style={{ padding: 18, border: `1px solid ${state.width ? "#ef233c" : "#2b2b2b"}`, borderRadius: 12, background: "#161616" }}>
+                        <div style={{ fontWeight: 800, fontSize: 15 }}>{def.label}</div>
+                        <div style={{ color: "#737373", fontSize: 12, margin: "6px 0 0" }}>{def.note}</div>
+                        <div style={{ marginTop: 12 }}>
+                          <label style={{ ...fieldLabelStyle, marginTop: 0 }}>Print size
+                            <select value={state.width} onChange={(e) => updatePrint(def.key, { width: e.target.value })} style={selectStyle}>
+                              <option value="">Choose size…</option>
+                              {def.widths.map((w) => <option key={w} value={w}>{w} in</option>)}
+                            </select>
+                          </label>
+                          <label style={{ ...fieldLabelStyle, marginTop: 12 }}>Artwork
+                            <input
+                              name={def.field}
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp"
+                              onChange={(e) => setFileInfo((current) => ({ ...current, [def.key]: e.target.files?.[0] || null }))}
+                              style={{ width: "100%", padding: 12, boxSizing: "border-box", background: "#191919", color: "#ddd", border: "1px dashed #555", borderRadius: 9, marginTop: 7 }}
+                            />
+                          </label>
+                          <p style={{ color: "#737373", fontSize: 12, marginBottom: 0 }}>{file ? `Selected: ${file.name}` : "PNG, JPG, or WebP · 25 MB max · transparent PNG recommended."}</p>
+                          {state.width && !file && <p style={{ color: "#f59e0b", fontSize: 12, fontWeight: 700, marginBottom: 0 }}>Artwork is required for this selected placement.</p>}
+                          {!state.width && file && <p style={{ color: "#f59e0b", fontSize: 12, fontWeight: 700, marginBottom: 0 }}>Choose a print size to include this artwork.</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div style={{ fontSize: 13, color: "#525252", lineHeight: 1.7 }}>
-                  <div>Garments: <strong>{money(quote.garments)}</strong></div>
-                  {quote.prints.map((p) => (
-                    <div key={p.key}>{p.label} ({p.width}&quot;): <strong>{money(p.subtotal)}</strong> <span style={{ color: "#737373" }}>@ {money(p.rate)}/print</span></div>
+              </section>
+
+              <section style={{ marginTop: 16, padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
+                <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>03</div>
+                <h2 style={{ margin: "7px 0 18px", fontSize: 25 }}>Sizes & quantities</h2>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(92px,1fr))", gap: 10 }}>
+                  {SIZES.map((size) => (
+                    <label key={size} style={{ color: "#a3a3a3", fontSize: 12, fontWeight: 800 }}>{size}
+                      <input name={`size_${size}`} type="number" min="0" step="1" value={sizes[size]} onChange={(e) => updateSize(size, e.target.value)} style={{ display: "block", width: "100%", boxSizing: "border-box", padding: 12, marginTop: 6, background: "#191919", color: "#fff", border: "1px solid #3a3a3a", borderRadius: 9, fontSize: 16 }} />
+                    </label>
                   ))}
-                  <div>DTF printing: <strong>{money(quote.dtf)}</strong></div>
-                  {quote.minimumAdjustment > 0 && (
-                    <>
-                      <div>Calculated subtotal: <strong>{money(quote.calculatedTotal)}</strong></div>
-                      <div>Small-run minimum adjustment: <strong>{money(quote.minimumAdjustment)}</strong></div>
-                    </>
-                  )}
-                  <div>DTF tier: <strong>{quote.tier}</strong></div>
                 </div>
-                <button type="submit" disabled={!canSubmit} style={{ width: "100%", padding: "15px 20px", border: 0, borderRadius: 9, background: "#111", color: "#fff", fontWeight: 900, fontSize: 15, cursor: canSubmit ? "pointer" : "not-allowed", opacity: canSubmit ? 1 : .45 }}>
-                  {fetcher.state === "idle" ? "Submit Order for Proof →" : "Submitting…"}
-                </button>
-              </div>
+                <div style={{ marginTop: 16, paddingTop: 15, borderTop: "1px solid #292929", color: "#a3a3a3" }}>
+                  <strong style={{ color: "#fff" }}>{garmentCount}</strong> total garments · current DTF tier <strong style={{ color: "#fff" }}>{quote.tier}</strong>
+                  {isSmallRun && <span> · {money(SMALL_RUN_MINIMUM)} small-run minimum applies</span>}
+                </div>
+              </section>
 
-              <div style={{ marginTop: 20, padding: 16, borderRadius: 10, background: "#e5e5e5", color: "#404040", fontSize: 12, lineHeight: 1.65 }}>
-                <strong>Custom order policy:</strong> Standard custom orders begin at 12 garments. Orders of 1–11 garments are subject to a {money(SMALL_RUN_MINIMUM)} minimum order subtotal. Standard production is 7–10 business days for 12–99 garments and 10–14 business days for 100+ garments. Production begins after proof approval, invoice payment, and garment availability are confirmed. Local pickup and shipping are available. Artwork cleanup fees may apply and will be confirmed before invoicing. Rush service may be available depending on garment availability.
-              </div>
+              <section style={{ marginTop: 16, padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
+                <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>04</div>
+                <h2 style={{ margin: "7px 0 6px", fontSize: 25 }}>Your information</h2>
+                <p style={{ color: "#737373", fontSize: 13, margin: "0 0 18px" }}>We’ll use your email to send your proof and final payment link after approval.</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
+                  <label style={fieldLabelStyle}>Name *
+                    <input name="customer_name" type="text" required value={contact.name} onChange={(e) => updateContact("name", e.target.value)} autoComplete="name" style={inputStyle} />
+                  </label>
+                  <label style={fieldLabelStyle}>Email *
+                    <input name="customer_email" type="email" required value={contact.email} onChange={(e) => updateContact("email", e.target.value)} autoComplete="email" style={inputStyle} />
+                  </label>
+                  <label style={fieldLabelStyle}>Phone
+                    <input name="customer_phone" type="tel" value={contact.phone} onChange={(e) => updateContact("phone", e.target.value)} autoComplete="tel" style={inputStyle} />
+                  </label>
+                  <label style={fieldLabelStyle}>Company / Organization
+                    <input name="customer_company" type="text" value={contact.company} onChange={(e) => updateContact("company", e.target.value)} autoComplete="organization" style={inputStyle} />
+                  </label>
+                </div>
+              </section>
 
-              {validationMessages.length > 0 && (
-                <div style={{ marginTop: 16, padding: 13, borderRadius: 9, background: "#fef3c7", color: "#92400e", fontWeight: 700 }}>
-                  {validationMessages.map((message) => <div key={message}>• {message}</div>)}
+              <section style={{ marginTop: 16, padding: 24, borderRadius: 16, background: "#f5f5f5", color: "#111" }}>
+                <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>05</div>
+                <h2 style={{ margin: "7px 0 18px", fontSize: 25 }}>Review your order</h2>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: 18 }}>
+                  <div style={{ fontSize: 13, lineHeight: 1.7 }}>
+                    <div><strong>Garment:</strong> {GARMENTS[garment].label}</div>
+                    <div><strong>Color:</strong> {color}</div>
+                    <div><strong>Quantity:</strong> {garmentCount}</div>
+                    <div><strong>Sizes:</strong> {sizeSummary || "None yet"}</div>
+                  </div>
+                  <div style={{ fontSize: 13, lineHeight: 1.7 }}>
+                    <div><strong>Prints:</strong> {quote.prints.length || 0}</div>
+                    {quote.prints.map((p) => <div key={p.key}>{p.label}: {p.width}&quot;</div>)}
+                  </div>
+                  <div style={{ fontSize: 13, lineHeight: 1.7 }}>
+                    <div><strong>Name:</strong> {contact.name || "—"}</div>
+                    <div><strong>Email:</strong> {contact.email || "—"}</div>
+                    {contact.phone && <div><strong>Phone:</strong> {contact.phone}</div>}
+                    {contact.company && <div><strong>Organization:</strong> {contact.company}</div>}
+                  </div>
                 </div>
-              )}
-              {fetcher.data && !fetcher.data.ok && (
-                <div style={{ marginTop: 16, padding: 13, borderRadius: 9, background: "#fee2e2", color: "#991b1b", fontWeight: 700 }}>
-                  {fetcher.data.error || "We couldn’t submit your order. Please try again."}
+
+                <div style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid #d4d4d4", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: 22, alignItems: "end" }}>
+                  <div>
+                    <div style={{ color: "#737373", fontSize: 11, letterSpacing: 2, fontWeight: 900 }}>ESTIMATED ORDER SUBTOTAL</div>
+                    <div style={{ fontSize: 44, lineHeight: 1.05, fontWeight: 900, letterSpacing: -1 }}>{money(quote.total)}</div>
+                    <div style={{ color: "#737373", marginTop: 7 }}>Shipping and applicable tax are handled later at payment.</div>
+                  </div>
+                  <div style={{ fontSize: 13, color: "#525252", lineHeight: 1.7 }}>
+                    <div>Garments: <strong>{money(quote.garments)}</strong></div>
+                    {quote.prints.map((p) => (
+                      <div key={p.key}>{p.label} ({p.width}&quot;): <strong>{money(p.subtotal)}</strong> <span style={{ color: "#737373" }}>@ {money(p.rate)}/print</span></div>
+                    ))}
+                    <div>DTF printing: <strong>{money(quote.dtf)}</strong></div>
+                    {quote.minimumAdjustment > 0 && (
+                      <>
+                        <div>Calculated subtotal: <strong>{money(quote.calculatedTotal)}</strong></div>
+                        <div>Small-run minimum adjustment: <strong>{money(quote.minimumAdjustment)}</strong></div>
+                      </>
+                    )}
+                    <div>DTF tier: <strong>{quote.tier}</strong></div>
+                  </div>
+                  <button type="submit" disabled={!canSubmit} style={{ width: "100%", padding: "15px 20px", border: 0, borderRadius: 9, background: "#111", color: "#fff", fontWeight: 900, fontSize: 15, cursor: canSubmit ? "pointer" : "not-allowed", opacity: canSubmit ? 1 : .45 }}>
+                    {fetcher.state === "idle" ? "Submit Order for Proof →" : "Submitting…"}
+                  </button>
                 </div>
-              )}
-            </section>
-          </form>
-        )}
-      </div>
-    </main>
+
+                <div style={{ marginTop: 20, padding: 16, borderRadius: 10, background: "#e5e5e5", color: "#404040", fontSize: 12, lineHeight: 1.65 }}>
+                  <strong>Custom order policy:</strong> Standard custom orders begin at 12 garments. Orders of 1–11 garments are subject to a {money(SMALL_RUN_MINIMUM)} minimum order subtotal. Standard production is 7–10 business days for 12–99 garments and 10–14 business days for 100+ garments. Production begins after proof approval, invoice payment, and garment availability are confirmed. Local pickup and shipping are available. Artwork cleanup fees may apply and will be confirmed before invoicing. Rush service may be available depending on garment availability.
+                </div>
+
+                {validationMessages.length > 0 && (
+                  <div style={{ marginTop: 16, padding: 13, borderRadius: 9, background: "#fef3c7", color: "#92400e", fontWeight: 700 }}>
+                    {validationMessages.map((message) => <div key={message}>• {message}</div>)}
+                  </div>
+                )}
+                {fetcher.data && !fetcher.data.ok && (
+                  <div style={{ marginTop: 16, padding: 13, borderRadius: 9, background: "#fee2e2", color: "#991b1b", fontWeight: 700 }}>
+                    {fetcher.data.error || "We couldn’t submit your order. Please try again."}
+                  </div>
+                )}
+              </section>
+            </form>
+          )}
+        </div>
+      </main>
+    </AppProxyProvider>
   );
 }
