@@ -363,6 +363,11 @@ export default function BulkBuilder() {
             <p style={{ color: "#a3a3a3", marginBottom: 0 }}>
               Reference: <strong style={{ color: "#fff" }}>{fetcher.data.draftOrder?.name}</strong> · {fetcher.data.pricing?.quantity} garments · estimated subtotal {money(fetcher.data.pricing?.total)}
             </p>
+            <p style={{ color: "#d4d4d4", margin: "24px 0 12px" }}>While we work on your proof, check out the rest of our stuff.</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+              <a href="/pages/low-morale-apparel" style={{ display: "inline-block", padding: "12px 18px", borderRadius: 9, background: "#f5f5f5", color: "#111", textDecoration: "none", fontWeight: 900 }}>Shop Low Morale Apparel →</a>
+              <a href="/" style={{ color: "#d4d4d4", fontWeight: 800, textDecoration: "underline", textUnderlineOffset: 3 }}>Back to 1099 Designs</a>
+            </div>
           </section>
         ) : (
           <form onSubmit={submit} encType="multipart/form-data">
