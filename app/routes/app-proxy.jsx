@@ -181,10 +181,10 @@ export default function BulkBuilder() {
   const [color, setColor] = useState("Athletic Heather");
   const [sizes, setSizes] = useState(Object.fromEntries(SIZES.map((size) => [size, 0])));
   const [prints, setPrints] = useState({
-    front: { enabled: false, width: "" },
-    chest_left: { enabled: false, width: "" },
-    chest_right: { enabled: false, width: "" },
-    back: { enabled: false, width: "" },
+    front: { width: "" },
+    chest_left: { width: "" },
+    chest_right: { width: "" },
+    back: { width: "" },
   });
   const [fileNames, setFileNames] = useState({ front: "", chest_left: "", chest_right: "", back: "" });
 
@@ -210,10 +210,10 @@ export default function BulkBuilder() {
 
   const activePrints = useMemo(() => {
     const list = [];
-    if (prints.front.enabled && prints.front.width) list.push({ key: "front", label: "Full front", width: prints.front.width });
-    if (prints.chest_left.enabled && prints.chest_left.width) list.push({ key: "chest_left", label: "Left chest", width: prints.chest_left.width });
-    if (prints.chest_right.enabled && prints.chest_right.width) list.push({ key: "chest_right", label: "Right chest", width: prints.chest_right.width });
-    if (prints.back.enabled && prints.back.width) list.push({ key: "back", label: "Full back", width: prints.back.width });
+    if (prints.front.width) list.push({ key: "front", label: "Full front", width: prints.front.width });
+    if (prints.chest_left.width) list.push({ key: "chest_left", label: "Left chest", width: prints.chest_left.width });
+    if (prints.chest_right.width) list.push({ key: "chest_right", label: "Right chest", width: prints.chest_right.width });
+    if (prints.back.width) list.push({ key: "back", label: "Full back", width: prints.back.width });
     return list;
   }, [prints]);
 
@@ -293,32 +293,27 @@ export default function BulkBuilder() {
             <section style={{ marginTop: 16, padding: 22, border: "1px solid #292929", borderRadius: 16, background: "#111" }}>
               <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>02</div>
               <h2 style={{ margin: "7px 0 6px", fontSize: 25 }}>Print placements</h2>
-              <p style={{ color: "#737373", fontSize: 13, margin: "0 0 18px" }}>Add up to four prints — each with its own size and artwork. Leave a placement off to skip it.</p>
+              <p style={{ color: "#737373", fontSize: 13, margin: "0 0 18px" }}>Add up to four prints — each with its own size and artwork. Leave a placement blank to skip it.</p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))", gap: 12 }}>
                 {PLACEMENT_DEFS.map((def) => {
                   const state = prints[def.key];
                   return (
-                    <div key={def.key} style={{ padding: 18, border: `1px solid ${state.enabled ? "#ef233c" : "#2b2b2b"}`, borderRadius: 12, background: "#161616" }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 800, fontSize: 15, cursor: "pointer" }}>
-                        <input type="checkbox" checked={state.enabled} onChange={(e) => updatePrint(def.key, { enabled: e.target.checked })} style={{ width: 18, height: 18, accentColor: "#ef233c" }} />
-                        {def.label}
-                      </label>
-                      <div style={{ color: "#737373", fontSize: 12, margin: "6px 0 0 28px" }}>{def.note}</div>
-                      {state.enabled && (
-                        <div style={{ marginTop: 12 }}>
-                          <label style={{ ...fieldLabelStyle, marginTop: 0 }}>Print size
-                            <select value={state.width} onChange={(e) => updatePrint(def.key, { width: e.target.value })} style={selectStyle}>
-                              <option value="">Choose size…</option>
-                              {def.widths.map((w) => <option key={w} value={w}>{w} in</option>)}
-                            </select>
-                          </label>
-                          <label style={{ ...fieldLabelStyle, marginTop: 12 }}>Artwork
-                            <input name={`artwork_${def.key}`} type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setFileNames((f) => ({ ...f, [def.key]: e.target.files?.[0]?.name || "" }))} style={{ width: "100%", padding: 12, boxSizing: "border-box", background: "#191919", color: "#ddd", border: "1px dashed #555", borderRadius: 9, marginTop: 7 }} />
-                          </label>
-                          <p style={{ color: "#737373", fontSize: 12, marginBottom: 0 }}>{fileNames[def.key] ? `Selected: ${fileNames[def.key]}` : "PNG, JPG, or WebP. Transparent PNG recommended."}</p>
-                          {!state.width && <p style={{ color: "#f59e0b", fontSize: 12, fontWeight: 700, marginBottom: 0 }}>Pick a size to include this print in your price.</p>}
-                        </div>
-                      )}
+                    <div key={def.key} style={{ padding: 18, border: `1px solid ${state.width ? "#ef233c" : "#2b2b2b"}`, borderRadius: 12, background: "#161616" }}>
+                      <div style={{ fontWeight: 800, fontSize: 15 }}>{def.label}</div>
+                      <div style={{ color: "#737373", fontSize: 12, margin: "6px 0 0" }}>{def.note}</div>
+                      <div style={{ marginTop: 12 }}>
+                        <label style={{ ...fieldLabelStyle, marginTop: 0 }}>Print size
+                          <select value={state.width} onChange={(e) => updatePrint(def.key, { width: e.target.value })} style={selectStyle}>
+                            <option value="">Choose size…</option>
+                            {def.widths.map((w) => <option key={w} value={w}>{w} in</option>)}
+                          </select>
+                        </label>
+                        <label style={{ ...fieldLabelStyle, marginTop: 12 }}>Artwork
+                          <input name={`artwork_${def.key}`} type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setFileNames((f) => ({ ...f, [def.key]: e.target.files?.[0]?.name || "" }))} style={{ width: "100%", padding: 12, boxSizing: "border-box", background: "#191919", color: "#ddd", border: "1px dashed #555", borderRadius: 9, marginTop: 7 }} />
+                        </label>
+                        <p style={{ color: "#737373", fontSize: 12, marginBottom: 0 }}>{fileNames[def.key] ? `Selected: ${fileNames[def.key]}` : "PNG, JPG, or WebP. Transparent PNG recommended."}</p>
+                        {!state.width && <p style={{ color: "#f59e0b", fontSize: 12, fontWeight: 700, marginBottom: 0 }}>Pick a size to include this print in your price.</p>}
+                      </div>
                     </div>
                   );
                 })}
