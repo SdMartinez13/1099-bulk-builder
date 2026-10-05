@@ -26,6 +26,8 @@ const PLACEMENT_RULES = [
 
 const emailLooksValid = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 
+class CustomerInputError extends Error {}
+
 function isAllowedArtworkFile(file) {
   const type = String(file?.type || "").toLowerCase();
   const name = String(file?.name || "").toLowerCase();
@@ -92,19 +94,19 @@ export const action = async ({ request }) => {
     const sizes = JSON.parse(String(form.get("sizes") || "{}"));
     const submittedPrints = JSON.parse(String(form.get("prints") || "[]"));
 
-    if (!customerName) throw new Error("Please enter your name.");
-    if (!emailLooksValid(customerEmail)) throw new Error("Please enter a valid email address.");
-    if (!Array.isArray(submittedPrints) || submittedPrints.length < 1) throw new Error("Select at least one print placement.");
+    if (!customerName) throw new CustomerInputError("Please enter your name.");
+    if (!emailLooksValid(customerEmail)) throw new CustomerInputError("Please enter a valid email address.");
+    if (!Array.isArray(submittedPrints) || submittedPrints.length < 1) throw new CustomerInputError("Select at least one print placement.");
 
     const seenPrints = new Set();
     const prints = submittedPrints.map((print) => {
       const key = String(print?.key || "");
       const rule = PLACEMENT_RULES.find((item) => item.key === key);
-      if (!rule) throw new Error("One of the selected print placements is invalid.");
-      if (seenPrints.has(key)) throw new Error(`Duplicate print placement: ${rule.label}.`);
+      if (!rule) throw new CustomerInputError("One of the selected print placements is invalid.");
+      if (seenPrints.has(key)) throw new CustomerInputError(`Duplicate print placement: ${rule.label}.`);
       seenPrints.add(key);
       const width = String(print?.width || "");
-      if (!rule.widths.includes(width)) throw new Error(`Invalid print size for ${rule.label}.`);
+      if (!rule.widths.includes(width)) throw new CustomerInputError(`Invalid print size for ${rule.label}.`);
       return { key: rule.key, label: rule.label, width };
     });
 
@@ -112,8 +114,8 @@ export const action = async ({ request }) => {
     for (const rule of PLACEMENT_RULES) {
       const file = form.get(rule.field);
       if (file && typeof file !== "string" && file.size > 0) {
-        if (file.size > MAX_ARTWORK_BYTES) throw new Error(`${rule.label} artwork must be 25 MB or smaller.`);
-        if (!isAllowedArtworkFile(file)) throw new Error(`${rule.label} artwork must be a PNG, JPG, or WebP file.`);
+        if (file.size > MAX_ARTWORK_BYTES) throw new CustomerInputError(`${rule.label} artwork must be 25 MB or smaller.`);
+        if (!isAllowedArtworkFile(file)) throw new CustomerInputError(`${rule.label} artwork must be a PNG, JPG, or WebP file.`);
         artworkByKey[rule.key] = file;
       }
     }
@@ -121,8 +123,8 @@ export const action = async ({ request }) => {
     for (const rule of PLACEMENT_RULES) {
       const selected = seenPrints.has(rule.key);
       const hasArtwork = Boolean(artworkByKey[rule.key]);
-      if (selected && !hasArtwork) throw new Error(`Please upload artwork for ${rule.label}.`);
-      if (!selected && hasArtwork) throw new Error(`Choose a print size for ${rule.label}, or remove its artwork.`);
+      if (selected && !hasArtwork) throw new CustomerInputError(`Please upload artwork for ${rule.label}.`);
+      if (!selected && hasArtwork) throw new CustomerInputError(`Choose a print size for ${rule.label}, or remove its artwork.`);
     }
 
     const quote = calculateOrder({ sizes, prints, garment, color, markup: 2 });
@@ -198,7 +200,10 @@ export const action = async ({ request }) => {
 
     const json = await response.json();
     const result = json.data?.draftOrderCreate;
-    if (result?.userErrors?.length) return Response.json({ ok: false, errors: result.userErrors }, { status: 400 });
+    if (result?.userErrors?.length) {
+      console.error("SHOPIFY DRAFT ORDER USER ERRORS:", JSON.stringify(result.userErrors));
+      return Response.json({ ok: false, error: "We couldn’t submit your order. Please try again." }, { status: 400 });
+    }
     if (!result?.draftOrder) throw new Error("Shopify did not create the Draft Order.");
 
     console.log("1099 PROOF REQUEST CREATED", JSON.stringify({
@@ -229,7 +234,10 @@ export const action = async ({ request }) => {
     });
   } catch (error) {
     console.error("APP PROXY DRAFT ORDER ERROR:", error);
-    return Response.json({ ok: false, error: error instanceof Error ? error.message : "Unable to submit order request." }, { status: 400 });
+    const message = error instanceof CustomerInputError
+      ? error.message
+      : "We couldn’t submit your order. Please try again.";
+    return Response.json({ ok: false, error: message }, { status: 400 });
   }
 };
 
@@ -426,7 +434,7 @@ export default function BulkBuilder() {
               </div>
               <div style={{ marginTop: 16, paddingTop: 15, borderTop: "1px solid #292929", color: "#a3a3a3" }}>
                 <strong style={{ color: "#fff" }}>{garmentCount}</strong> total garments · current DTF tier <strong style={{ color: "#fff" }}>{quote.tier}</strong>
-                {isSmallRun && <span> · $75 small-run minimum applies</span>}
+                {isSmallRun && <span> · {money(SMALL_RUN_MINIMUM)} small-run minimum applies</span>}
               </div>
             </section>
 
@@ -499,7 +507,7 @@ export default function BulkBuilder() {
               </div>
 
               <div style={{ marginTop: 20, padding: 16, borderRadius: 10, background: "#e5e5e5", color: "#404040", fontSize: 12, lineHeight: 1.65 }}>
-                <strong>Custom order policy:</strong> Standard custom orders begin at 12 garments. Orders of 1–11 garments are subject to a $75 minimum order subtotal. Standard production is 7–10 business days for 12–99 garments and 10–14 business days for 100+ garments. Production begins after proof approval, invoice payment, and garment availability are confirmed. Local pickup and shipping are available. Artwork cleanup fees may apply and will be confirmed before invoicing. Rush service may be available depending on garment availability.
+                <strong>Custom order policy:</strong> Standard custom orders begin at 12 garments. Orders of 1–11 garments are subject to a {money(SMALL_RUN_MINIMUM)} minimum order subtotal. Standard production is 7–10 business days for 12–99 garments and 10–14 business days for 100+ garments. Production begins after proof approval, invoice payment, and garment availability are confirmed. Local pickup and shipping are available. Artwork cleanup fees may apply and will be confirmed before invoicing. Rush service may be available depending on garment availability.
               </div>
 
               {validationMessages.length > 0 && (
@@ -509,7 +517,7 @@ export default function BulkBuilder() {
               )}
               {fetcher.data && !fetcher.data.ok && (
                 <div style={{ marginTop: 16, padding: 13, borderRadius: 9, background: "#fee2e2", color: "#991b1b", fontWeight: 700 }}>
-                  {fetcher.data.error || fetcher.data.errors?.map((e) => e.message).join("; ") || "We couldn’t submit your order. Please try again."}
+                  {fetcher.data.error || "We couldn’t submit your order. Please try again."}
                 </div>
               )}
             </section>
