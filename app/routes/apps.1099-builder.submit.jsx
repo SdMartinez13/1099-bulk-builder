@@ -15,7 +15,11 @@ const PLACEMENT_RULES = [
   { key: "back", label: "Full back", widths: BACK_WIDTHS },
 ];
 
+const FILE_READY_ATTEMPTS = 16;
+const FILE_READY_DELAY_MS = 500;
+
 const emailLooksValid = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 class SubmissionInputError extends Error {}
 
@@ -145,6 +149,63 @@ async function createShopifyFiles(admin, artwork) {
   }));
 }
 
+async function waitForShopifyFileUrls(admin, uploadedArtwork) {
+  let files = uploadedArtwork;
+
+  for (let attempt = 0; attempt < FILE_READY_ATTEMPTS; attempt += 1) {
+    const unresolvedIds = files.filter((item) => !item.url).map((item) => item.id);
+    if (!unresolvedIds.length) return files;
+
+    if (attempt > 0) await sleep(FILE_READY_DELAY_MS);
+
+    const response = await admin.graphql(`#graphql
+      query Get1099ArtworkFiles($ids: [ID!]!) {
+        nodes(ids: $ids) {
+          ... on GenericFile {
+            id
+            fileStatus
+            url
+          }
+        }
+      }`, {
+      variables: { ids: unresolvedIds },
+    });
+
+    const payload = await response.json();
+    if (payload?.errors?.length) {
+      console.error("1099 FILE READY QUERY ERRORS:", JSON.stringify(payload.errors));
+      throw new Error("Shopify artwork status could not be checked.");
+    }
+
+    const returnedFiles = new Map(
+      (payload?.data?.nodes || [])
+        .filter((file) => file?.id)
+        .map((file) => [file.id, file]),
+    );
+
+    files = files.map((item) => {
+      const refreshed = returnedFiles.get(item.id);
+      if (!refreshed) return item;
+      return {
+        ...item,
+        url: refreshed.url || item.url || null,
+        fileStatus: refreshed.fileStatus || item.fileStatus || null,
+      };
+    });
+
+    const failed = files.find((item) => item.fileStatus === "FAILED");
+    if (failed) {
+      throw new SubmissionInputError(`Shopify could not process the artwork for ${failed.label}. Please reselect the artwork and try again.`);
+    }
+  }
+
+  if (files.some((item) => !item.url)) {
+    throw new SubmissionInputError("Shopify is still processing the artwork. Please reselect the artwork and try again.");
+  }
+
+  return files;
+}
+
 async function cleanupFiles(admin, fileIds) {
   if (!fileIds.length) return;
 
@@ -202,8 +263,9 @@ export const action = async ({ request }) => {
       );
     }
 
-    const uploadedArtwork = await createShopifyFiles(admin, artwork);
+    let uploadedArtwork = await createShopifyFiles(admin, artwork);
     createdFileIds = uploadedArtwork.map((item) => item.id);
+    uploadedArtwork = await waitForShopifyFileUrls(admin, uploadedArtwork);
 
     const sizeText = Object.entries(quote.sizes)
       .map(([size, qty]) => `${size}: ${qty}`)
@@ -216,7 +278,7 @@ export const action = async ({ request }) => {
 
     const artworkAttributes = uploadedArtwork.flatMap((item) => [
       { key: `${item.label} artwork file ID`, value: item.id },
-      ...(item.url ? [{ key: `${item.label} artwork URL`, value: item.url }] : []),
+      { key: `${item.label} artwork URL`, value: item.url },
       { key: `${item.label} artwork filename`, value: item.filename },
     ]);
 
