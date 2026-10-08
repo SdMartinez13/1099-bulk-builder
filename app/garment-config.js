@@ -32,8 +32,8 @@ export const FRONT_WIDTHS = PRINT_WIDTHS.filter((w) => Number(w) <= 13);
 export const BACK_WIDTHS = PRINT_WIDTHS.filter((w) => Number(w) <= 13);
 export const CHEST_WIDTHS = ["2.5", "3", "3.5", "4"];
 
-// Hobby Lobby landed costs include the current shelf price plus the 10.4%
-// local sales-tax assumption used for 1099 Designs sourcing.
+// Hobby Lobby after-tax internal costs include the current shelf price plus
+// the 10.4% local sales-tax assumption used for 1099 Designs sourcing.
 const TEE_COSTS = {
   S: 3.78,
   M: 3.78,
@@ -62,6 +62,8 @@ const CREWNECK_COSTS = {
   "3XL": 17.65,
 };
 
+// PLACEHOLDER ONLY on this staging branch. Replace with verified BulkApparel
+// color/size costs before merging this branch to main.
 const PC450_COSTS = {
   S: 2.89,
   M: 2.89,
@@ -72,17 +74,33 @@ const PC450_COSTS = {
   "4XL": 5.97,
 };
 
+const PC450_COLORS = [
+  "Light Blue",
+  "True Royal",
+  "Athletic Heather",
+  "White",
+  "Yellow",
+  "Orange",
+  "Bright Red",
+  "Pro Kelly Green",
+  "Team Purple",
+  "Jet Black",
+  "Deep Navy",
+  "Candy Pink",
+  "Forest Green",
+];
+
 const SWEATSHIRT_SIZES = ["S", "M", "L", "XL", "2XL", "3XL"];
 
 export const GARMENTS = {
   PC450: {
-    label: "PC450 Core Cotton Tee",
+    label: "Port & Company Fan Favorite Tee (PC450)",
     sizes: SIZES,
-    colors: ["Athletic Heather"],
-    costs: { "Athletic Heather": PC450_COSTS },
+    colors: PC450_COLORS,
+    costs: Object.fromEntries(PC450_COLORS.map((color) => [color, PC450_COSTS])),
   },
   G5000: {
-    label: "Gildan G5000 100% Cotton Tee",
+    label: "Gildan Heavy Cotton T-Shirt (G5000)",
     sizes: SIZES,
     colors: [
       "Sky",
