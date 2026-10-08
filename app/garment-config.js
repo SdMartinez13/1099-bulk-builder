@@ -64,9 +64,6 @@ const CREWNECK_COSTS = {
 
 // BulkApparel PC450 baseline checked 2026-10-08. These are after-tax
 // internal costs using the same 10.4% local sales-tax assumption.
-// White is publicly priced through 4XL. BulkApparel publicly exposes the
-// color price only for S-XL, so colored 2XL-4XL are intentionally omitted
-// until those exact prices are verified rather than guessed.
 const PC450_WHITE_COSTS = {
   S: 5.50,
   M: 5.50,
@@ -82,6 +79,9 @@ const PC450_COLOR_COSTS = {
   M: 6.01,
   L: 6.01,
   XL: 6.01,
+  "2XL": 9.37,
+  "3XL": 11.82,
+  "4XL": 11.82,
 };
 
 const PC450_COLORS = [
