@@ -272,10 +272,11 @@ export default function BulkBuilder() {
 
   const config = GARMENTS[garment];
   const colors = config.colors;
+  const availableSizes = config.sizes || SIZES;
 
-  const garmentCount = useMemo(
-    () => Object.values(sizes).reduce((sum, q) => sum + Math.max(0, Math.floor(Number(q) || 0)), 0),
-    [sizes]
+  const garmentCount = availableSizes.reduce(
+    (sum, size) => sum + Math.max(0, Math.floor(Number(sizes[size]) || 0)),
+    0,
   );
 
   const activePrints = useMemo(() => {
@@ -326,8 +327,12 @@ export default function BulkBuilder() {
   }, [garmentCount, activePrints, contact, prints, fileInfo]);
 
   const updateGarment = (next) => {
+    const nextConfig = GARMENTS[next];
     setGarment(next);
-    setColor(GARMENTS[next].colors[0]);
+    setColor(nextConfig.colors[0]);
+    setSizes((current) => Object.fromEntries(
+      SIZES.map((size) => [size, nextConfig.sizes.includes(size) ? current[size] || 0 : 0]),
+    ));
   };
 
   const updateSize = (size, value) => {
@@ -352,7 +357,10 @@ export default function BulkBuilder() {
   };
 
   const canSubmit = validationMessages.length === 0 && fetcher.state === "idle";
-  const sizeSummary = Object.entries(sizes).filter(([, qty]) => Number(qty) > 0).map(([size, qty]) => `${size}: ${qty}`).join(" · ");
+  const sizeSummary = availableSizes
+    .filter((size) => Number(sizes[size]) > 0)
+    .map((size) => `${size}: ${sizes[size]}`)
+    .join(" · ");
   const isSmallRun = garmentCount >= 1 && garmentCount <= 11;
 
   return (
@@ -442,7 +450,7 @@ export default function BulkBuilder() {
                 <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>03</div>
                 <h2 style={{ margin: "7px 0 18px", fontSize: 25 }}>Sizes & quantities</h2>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(92px,1fr))", gap: 10 }}>
-                  {SIZES.map((size) => (
+                  {availableSizes.map((size) => (
                     <label key={size} style={{ color: "#a3a3a3", fontSize: 12, fontWeight: 800 }}>{size}
                       <input name={`size_${size}`} type="number" min="0" step="1" value={sizes[size]} onChange={(e) => updateSize(size, e.target.value)} style={{ display: "block", width: "100%", boxSizing: "border-box", padding: 12, marginTop: 6, background: "#191919", color: "#fff", border: "1px solid #3a3a3a", borderRadius: 9, fontSize: 16 }} />
                     </label>
