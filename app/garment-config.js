@@ -62,16 +62,26 @@ const CREWNECK_COSTS = {
   "3XL": 17.65,
 };
 
-// PLACEHOLDER ONLY on this staging branch. Replace with verified BulkApparel
-// color/size costs before merging this branch to main.
-const PC450_COSTS = {
-  S: 2.89,
-  M: 2.89,
-  L: 2.89,
-  XL: 2.89,
-  "2XL": 4.58,
-  "3XL": 5.97,
-  "4XL": 5.97,
+// BulkApparel PC450 baseline checked 2026-10-08. These are after-tax
+// internal costs using the same 10.4% local sales-tax assumption.
+// White is publicly priced through 4XL. BulkApparel publicly exposes the
+// color price only for S-XL, so colored 2XL-4XL are intentionally omitted
+// until those exact prices are verified rather than guessed.
+const PC450_WHITE_COSTS = {
+  S: 5.50,
+  M: 5.50,
+  L: 5.50,
+  XL: 5.50,
+  "2XL": 8.17,
+  "3XL": 10.07,
+  "4XL": 10.07,
+};
+
+const PC450_COLOR_COSTS = {
+  S: 6.01,
+  M: 6.01,
+  L: 6.01,
+  XL: 6.01,
 };
 
 const PC450_COLORS = [
@@ -97,7 +107,12 @@ export const GARMENTS = {
     label: "Port & Company Fan Favorite Tee (PC450)",
     sizes: SIZES,
     colors: PC450_COLORS,
-    costs: Object.fromEntries(PC450_COLORS.map((color) => [color, PC450_COSTS])),
+    costs: Object.fromEntries(
+      PC450_COLORS.map((color) => [
+        color,
+        color === "White" ? PC450_WHITE_COSTS : PC450_COLOR_COSTS,
+      ]),
+    ),
   },
   G5000: {
     label: "Gildan Heavy Cotton T-Shirt (G5000)",
