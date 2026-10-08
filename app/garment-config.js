@@ -32,26 +32,34 @@ export const FRONT_WIDTHS = PRINT_WIDTHS.filter((w) => Number(w) <= 13);
 export const BACK_WIDTHS = PRINT_WIDTHS.filter((w) => Number(w) <= 13);
 export const CHEST_WIDTHS = ["2.5", "3", "3.5", "4"];
 
-// Blank-cost baseline for the Gildan 18500 hoodie. Centralized so sourcing
-// costs can be changed in one place without touching the UI or checkout code.
-const HOODIE_COSTS = {
-  S: 10.15,
-  M: 10.15,
-  L: 10.15,
-  XL: 10.15,
-  "2XL": 12.73,
-  "3XL": 15.21,
-  "4XL": 15.21,
+// Hobby Lobby landed costs include the current shelf price plus the 10.4%
+// local sales-tax assumption used for 1099 Designs sourcing.
+const TEE_COSTS = {
+  S: 3.78,
+  M: 3.78,
+  L: 3.78,
+  XL: 3.78,
+  "2XL": 5.73,
+  "3XL": 5.73,
+  "4XL": 6.17,
 };
 
-const TEE_COSTS = {
-  S: 3,
-  M: 3,
-  L: 3,
-  XL: 3,
-  "2XL": 6,
-  "3XL": 6,
-  "4XL": 7,
+const HOODIE_COSTS = {
+  S: 15.89,
+  M: 15.89,
+  L: 15.89,
+  XL: 15.89,
+  "2XL": 17.65,
+  "3XL": 23.84,
+};
+
+const CREWNECK_COSTS = {
+  S: 14.12,
+  M: 14.12,
+  L: 14.12,
+  XL: 14.12,
+  "2XL": 15.89,
+  "3XL": 17.65,
 };
 
 const PC450_COSTS = {
@@ -64,79 +72,81 @@ const PC450_COSTS = {
   "4XL": 5.97,
 };
 
+const SWEATSHIRT_SIZES = ["S", "M", "L", "XL", "2XL", "3XL"];
+
 export const GARMENTS = {
   PC450: {
     label: "PC450 Core Cotton Tee",
+    sizes: SIZES,
     colors: ["Athletic Heather"],
     costs: { "Athletic Heather": PC450_COSTS },
-    variantIds: { "Athletic Heather": "gid://shopify/ProductVariant/57401445056678" },
   },
   G5000: {
     label: "Gildan G5000 100% Cotton Tee",
-    colors: ["Black", "White", "Blue", "Red", "Gray", "Tan"],
+    sizes: SIZES,
+    colors: [
+      "Sky",
+      "Royal",
+      "Sport Gray",
+      "White",
+      "Daisy",
+      "Orange",
+      "Heliconia",
+      "Red",
+      "Irish Green",
+      "Purple",
+      "Black",
+      "Navy",
+      "Sand",
+      "Light Pink",
+      "Sage",
+      "Violet",
+      "Forest Green",
+    ],
     costs: {
-      Black: TEE_COSTS,
+      Sky: TEE_COSTS,
+      Royal: TEE_COSTS,
+      "Sport Gray": TEE_COSTS,
       White: TEE_COSTS,
-      Blue: TEE_COSTS,
+      Daisy: TEE_COSTS,
+      Orange: TEE_COSTS,
+      Heliconia: TEE_COSTS,
       Red: TEE_COSTS,
-      Gray: TEE_COSTS,
-      Tan: TEE_COSTS,
-    },
-    variantIds: {
-      Black: "gid://shopify/ProductVariant/57401455444134",
-      White: "gid://shopify/ProductVariant/57401455476902",
-      Blue: "gid://shopify/ProductVariant/57401455509670",
-      Red: "gid://shopify/ProductVariant/57401455542438",
-      Gray: "gid://shopify/ProductVariant/57401455575206",
-      Tan: "gid://shopify/ProductVariant/57401455607974",
+      "Irish Green": TEE_COSTS,
+      Purple: TEE_COSTS,
+      Black: TEE_COSTS,
+      Navy: TEE_COSTS,
+      Sand: TEE_COSTS,
+      "Light Pink": TEE_COSTS,
+      Sage: TEE_COSTS,
+      Violet: TEE_COSTS,
+      "Forest Green": TEE_COSTS,
     },
   },
   G18500: {
     label: "Gildan Heavy Blend Hoodie (18500)",
-    colors: ["Black", "White", "Gray", "Red", "Tan"],
+    sizes: SWEATSHIRT_SIZES,
+    colors: ["White", "Black", "Sport Gray", "Red", "Light Pink", "Sand"],
     costs: {
-      Black: HOODIE_COSTS,
       White: HOODIE_COSTS,
-      Gray: HOODIE_COSTS,
+      Black: HOODIE_COSTS,
+      "Sport Gray": HOODIE_COSTS,
       Red: HOODIE_COSTS,
-      Tan: HOODIE_COSTS,
+      "Light Pink": HOODIE_COSTS,
+      Sand: HOODIE_COSTS,
     },
-    variantIds: {
-      "Black:S": "gid://shopify/ProductVariant/57409190887590",
-      "Black:M": "gid://shopify/ProductVariant/57409190920358",
-      "Black:L": "gid://shopify/ProductVariant/57409190953126",
-      "Black:XL": "gid://shopify/ProductVariant/57409190985894",
-      "Black:2XL": "gid://shopify/ProductVariant/57409191018662",
-      "Black:3XL": "gid://shopify/ProductVariant/57409191051430",
-      "Black:4XL": "gid://shopify/ProductVariant/57409191084198",
-      "White:S": "gid://shopify/ProductVariant/57409191116966",
-      "White:M": "gid://shopify/ProductVariant/57409191149734",
-      "White:L": "gid://shopify/ProductVariant/57409191182502",
-      "White:XL": "gid://shopify/ProductVariant/57409191215270",
-      "White:2XL": "gid://shopify/ProductVariant/57409191248038",
-      "White:3XL": "gid://shopify/ProductVariant/57409191280806",
-      "White:4XL": "gid://shopify/ProductVariant/57409191313574",
-      "Gray:S": "gid://shopify/ProductVariant/57409191346342",
-      "Gray:M": "gid://shopify/ProductVariant/57409191379110",
-      "Gray:L": "gid://shopify/ProductVariant/57409191411878",
-      "Gray:XL": "gid://shopify/ProductVariant/57409191444646",
-      "Gray:2XL": "gid://shopify/ProductVariant/57409191477414",
-      "Gray:3XL": "gid://shopify/ProductVariant/57409191510182",
-      "Gray:4XL": "gid://shopify/ProductVariant/57409191542950",
-      "Red:S": "gid://shopify/ProductVariant/57409191575718",
-      "Red:M": "gid://shopify/ProductVariant/57409191608486",
-      "Red:L": "gid://shopify/ProductVariant/57409191641254",
-      "Red:XL": "gid://shopify/ProductVariant/57409191674022",
-      "Red:2XL": "gid://shopify/ProductVariant/57409191706790",
-      "Red:3XL": "gid://shopify/ProductVariant/57409191739558",
-      "Red:4XL": "gid://shopify/ProductVariant/57409191772326",
-      "Tan:S": "gid://shopify/ProductVariant/57409191805094",
-      "Tan:M": "gid://shopify/ProductVariant/57409191837862",
-      "Tan:L": "gid://shopify/ProductVariant/57409191870630",
-      "Tan:XL": "gid://shopify/ProductVariant/57409191903398",
-      "Tan:2XL": "gid://shopify/ProductVariant/57409191936166",
-      "Tan:3XL": "gid://shopify/ProductVariant/57409191968934",
-      "Tan:4XL": "gid://shopify/ProductVariant/57409192001702",
+  },
+  G18000: {
+    label: "Gildan Heavy Blend Crewneck Sweatshirt (18000)",
+    sizes: SWEATSHIRT_SIZES,
+    colors: ["White", "Black", "Sport Gray", "Red", "Light Pink", "Sand"],
+    costs: {
+      White: CREWNECK_COSTS,
+      Black: CREWNECK_COSTS,
+      "Sport Gray": CREWNECK_COSTS,
+      Red: CREWNECK_COSTS,
+      "Light Pink": CREWNECK_COSTS,
+      Sand: CREWNECK_COSTS,
     },
   },
 };
@@ -147,14 +157,6 @@ export function getTier(quantity) {
   if (quantity >= 50) return [2, "50–99"];
   if (quantity >= 10) return [1, "10–49"];
   return [0, "1–9"];
-}
-
-export function getVariantId(garment, color, sizes = {}) {
-  const config = GARMENTS[garment];
-  if (!config) return null;
-  if (garment !== "G18500") return config.variantIds[color] || null;
-  const size = SIZES.find((candidate) => Number(sizes[candidate] || 0) > 0) || "S";
-  return config.variantIds[`${color}:${size}`] || null;
 }
 
 export function calculateOrder({ sizes, prints, printWidth, printLocation = "Front", garment = "PC450", color = "Athletic Heather", markup = 2 }) {
@@ -169,14 +171,14 @@ export function calculateOrder({ sizes, prints, printWidth, printLocation = "Fro
   const cleanSizes = {};
 
   for (const [size, rawQty] of Object.entries(sizes)) {
-    if (!(size in sizeCosts)) throw new Error(`Invalid size: ${size}`);
     const qty = Number(rawQty);
     if (!Number.isInteger(qty) || qty < 0) throw new Error(`Invalid quantity for ${size}`);
-    if (qty > 0) {
-      cleanSizes[size] = qty;
-      quantity += qty;
-      garments += qty * sizeCosts[size] * markup;
-    }
+    if (qty === 0) continue;
+    if (!(size in sizeCosts)) throw new Error(`Invalid size: ${size}`);
+
+    cleanSizes[size] = qty;
+    quantity += qty;
+    garments += qty * sizeCosts[size] * markup;
   }
 
   if (quantity < 1) throw new Error("Order must contain at least one garment.");
