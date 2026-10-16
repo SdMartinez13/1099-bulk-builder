@@ -1,0 +1,105 @@
+{% if product and product.tags contains 'Custom Engraving' %}
+  <div
+    class="engraving-personalization"
+    data-engraving-personalization
+    data-product-handle="{{ product.handle | escape }}"
+    data-section-id="{{ section.id | escape }}"
+    {{ block.shopify_attributes }}
+  >
+    <div class="engraving-personalization__heading">
+      <p class="engraving-personalization__eyebrow">CUSTOM ENGRAVING</p>
+      <h3>Tell us what to engrave</h3>
+      <p>Enter text, upload artwork, or use both. We’ll send a digital proof before production.</p>
+    </div>
+
+    <label class="engraving-personalization__field">
+      <span>Engraving text <small>(optional if uploading artwork)</small></span>
+      <input
+        type="text"
+        maxlength="120"
+        autocomplete="off"
+        data-engraving-text
+        placeholder="Name, initials, short message, etc."
+      >
+    </label>
+
+    <div class="engraving-personalization__artwork">
+      <div class="engraving-personalization__artwork-header">
+        <span class="engraving-personalization__label">Artwork <small>(optional if entering text)</small></span>
+        <button type="button" class="engraving-personalization__requirements-button" data-artwork-requirements-open>
+          Artwork requirements
+        </button>
+      </div>
+
+      <div data-artwork-slots>
+        {% for slot in (1..4) %}
+          <label class="engraving-personalization__field engraving-personalization__file-field" data-artwork-slot="{{ slot }}"{% if slot > 1 %} hidden{% endif %}>
+            <span data-artwork-slot-label>Artwork {% if slot > 1 %}{{ slot }}{% endif %}</span>
+            <input
+              type="file"
+              accept=".svg,.ai,.eps,.jpg,.jpeg,.bmp,.png,.heic,.tiff,.tif,.ppt,.pptx,.doc,.docx,.pdf,.psd"
+              data-engraving-file
+              data-slot="{{ slot }}"
+            >
+            <small data-file-help>SVG, AI, EPS, JPG, BMP, PNG, HEIC, TIFF, PPT, DOC, PDF, or PSD · 20 MB max</small>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <label class="engraving-personalization__field">
+      <span>Notes for our artist <small>(optional)</small></span>
+      <textarea
+        rows="3"
+        maxlength="500"
+        data-engraving-notes
+        placeholder="Placement, layout, special instructions, or anything else we should know."
+      ></textarea>
+    </label>
+
+    <p class="engraving-personalization__error" data-engraving-error hidden></p>
+    <p class="engraving-personalization__status" data-engraving-status aria-live="polite"></p>
+
+    <div class="engraving-personalization__proof-note">
+      <strong>Proof before production.</strong> We’ll review your artwork and send a digital proof for approval before engraving your item.
+    </div>
+
+    <dialog class="engraving-personalization__dialog" data-artwork-requirements-dialog>
+      <div class="engraving-personalization__dialog-inner">
+        <button type="button" class="engraving-personalization__dialog-close" aria-label="Close artwork requirements" data-artwork-requirements-close>×</button>
+        <p class="engraving-personalization__eyebrow">ARTWORK REQUIREMENTS</p>
+        <h3>For the cleanest engraving</h3>
+        <ul>
+          <li><strong>300+ DPI:</strong> High Resolution (Recommended)</li>
+          <li><strong>200–299 DPI:</strong> Medium Resolution</li>
+          <li><strong>Below 199 DPI:</strong> Low Resolution</li>
+        </ul>
+        <p>Our artists will work to improve low- or medium-quality artwork when possible.</p>
+        <p><strong>Recommended vector files:</strong> SVG, AI, EPS</p>
+        <p><strong>Also accepted:</strong> JPG, JPEG, BMP, PNG, HEIC, TIFF, TIF, PPT, PPTX, DOC, DOCX, PDF, PSD</p>
+        <p><strong>Design tip:</strong> Avoid very fine text and highly detailed images with people, scenery, or gradients when possible.</p>
+      </div>
+    </dialog>
+
+    <script type="application/json" data-engraving-variants>
+      [
+        {% for variant in product.variants %}
+          {"id":"{{ variant.id }}","title":{{ variant.title | json }}}{% unless forloop.last %},{% endunless %}
+        {% endfor %}
+      ]
+    </script>
+  </div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Engraving details",
+  "target": "section",
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "stylesheet": "engraving-personalization.css",
+  "javascript": "engraving-personalization.js",
+  "settings": []
+}
+{% endschema %}
