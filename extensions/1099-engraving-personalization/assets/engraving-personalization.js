@@ -72,11 +72,14 @@
     if (root.dataset.engravingInitialized === "1") return;
     root.dataset.engravingInitialized = "1";
 
+    const sectionId = root.dataset.sectionId || "";
     const section = root.closest(".shopify-section")
-      || document.getElementById(`shopify-section-${root.dataset.sectionId}`)
+      || document.getElementById(`shopify-section-${sectionId}`)
       || root.parentElement;
-    const form = section?.querySelector('form[action*="/cart/add"]')
-      || document.querySelector('form[action*="/cart/add"]');
+    const exactForm = document.getElementById(`product-form-${sectionId}`);
+    const fallbackForm = Array.from(section?.querySelectorAll('form[action*="/cart/add"]') || [])
+      .find((candidate) => candidate.querySelector('[name="add"]'));
+    const form = exactForm || fallbackForm || null;
     const errorEl = root.querySelector("[data-engraving-error]");
     const statusEl = root.querySelector("[data-engraving-status]");
     const textInput = root.querySelector("[data-engraving-text]");
@@ -108,6 +111,9 @@
       showError("This customization block could not connect to the product form. Please refresh the page or contact 1099 Designs.");
       return;
     }
+
+    const dynamicCheckout = section?.querySelector(".shopify-payment-button");
+    if (dynamicCheckout) dynamicCheckout.hidden = true;
 
     const selectedVariantTitle = () => {
       const idInput = form.querySelector('[name="id"]');
@@ -256,8 +262,8 @@
         addProperty("Engraving Notes", notes);
         addProperty("Proof", "Digital proof required before production");
 
-        uploaded.forEach((artwork, index) => {
-          const displayNumber = activeSlotCount > 1 ? ` ${index + 1}` : "";
+        uploaded.forEach((artwork) => {
+          const displayNumber = activeSlotCount > 1 ? ` ${artwork.slot}` : "";
           addProperty(`Artwork${displayNumber}`, artwork.filename);
           addProperty(`_Artwork${displayNumber} URL`, artwork.url);
           addProperty(`_Artwork${displayNumber} File ID`, artwork.id);
