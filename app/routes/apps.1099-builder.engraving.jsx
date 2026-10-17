@@ -1,11 +1,10 @@
 import { useFetcher, useLoaderData } from "react-router";
 import { AppProxyProvider } from "@shopify/shopify-app-react-router/react";
 import { authenticate } from "../shopify.server";
-import {
-  ENGRAVING_ARTWORK_ACCEPT,
-  MAX_ENGRAVING_ARTWORK_BYTES,
-  validateEngravingArtworkMetadata,
-} from "../engraving-upload.server";
+import { validateEngravingArtworkMetadata } from "../engraving-upload.server";
+
+const ENGRAVING_ARTWORK_ACCEPT = ".svg,.ai,.eps,.jpg,.jpeg,.bmp,.png,.heic,.tiff,.tif,.ppt,.pptx,.doc,.docx,.pdf,.psd";
+const MAX_ENGRAVING_ARTWORK_BYTES = 20 * 1024 * 1024;
 
 const emailLooksValid = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 
