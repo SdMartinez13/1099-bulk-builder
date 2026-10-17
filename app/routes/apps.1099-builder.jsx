@@ -411,7 +411,10 @@ export default function BulkBuilder() {
                 <div style={{ color: "#ef233c", fontSize: 12, fontWeight: 900 }}>02</div>
                 <h2 style={{ margin: "7px 0 6px", fontSize: 25 }}>Print placements</h2>
                 <p style={{ color: "#737373", fontSize: 13, margin: "0 0 6px" }}>Add up to four prints — each with its own size and artwork. Leave a placement blank to skip it.</p>
-                <p style={{ color: "#a3a3a3", fontSize: 12, margin: "0 0 18px" }}>Left and right chest are based on the wearer’s left and right.</p>
+                <p style={{ color: "#a3a3a3", fontSize: 12, margin: "0 0 12px" }}>Left and right chest are based on the wearer’s left and right.</p>
+                <div style={{ margin: "0 0 18px", padding: 14, borderRadius: 10, background: "#1b1b1b", border: "1px solid #333", color: "#d4d4d4", fontSize: 12, lineHeight: 1.6 }}>
+                  <strong style={{ color: "#fff" }}>Artwork/design fees:</strong> Basic artwork review is included. If submitted artwork requires significant cleanup, redrawing, vector conversion, or design work before production, an artwork/design fee may apply. Any additional fee will be communicated and approved before it is added to your invoice.
+                </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))", gap: 12 }}>
                   {PLACEMENT_RULES.map((def) => {
                     const state = prints[def.key];
@@ -531,7 +534,7 @@ export default function BulkBuilder() {
                 </div>
 
                 <div style={{ marginTop: 20, padding: 16, borderRadius: 10, background: "#e5e5e5", color: "#404040", fontSize: 12, lineHeight: 1.65 }}>
-                  <strong>Custom order policy:</strong> Standard custom orders begin at 12 garments. Orders of 1–11 garments are subject to a {money(SMALL_RUN_MINIMUM)} minimum order subtotal. Standard production is 7–10 business days for 12–99 garments and 10–14 business days for 100+ garments. Production begins after proof approval, invoice payment, and garment availability are confirmed. Local pickup and shipping are available. Artwork cleanup fees may apply and will be confirmed before invoicing. Rush service may be available depending on garment availability.
+                  <strong>Custom order policy:</strong> Standard custom orders begin at 12 garments. Orders of 1–11 garments are subject to a {money(SMALL_RUN_MINIMUM)} minimum order subtotal. Standard production is 7–10 business days for 12–99 garments and 10–14 business days for 100+ garments. Production begins after proof approval, invoice payment, and garment availability are confirmed. Local pickup and shipping are available. Basic artwork review is included. Significant cleanup, redrawing, vector conversion, or design work may require an artwork/design fee; any additional fee will be communicated and approved before it is added to your invoice. Rush service may be available depending on garment availability.
                 </div>
 
                 {validationMessages.length > 0 && (
