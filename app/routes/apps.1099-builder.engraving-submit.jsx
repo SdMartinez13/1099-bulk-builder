@@ -34,7 +34,7 @@ function jsonForInlineScript(value) {
 function returnToStorefront(location, result) {
   const safeLocationHtml = escapeHtml(location);
   const safeLocationJs = jsonForInlineScript(location);
-  const safeResultJs = jsonForInlineScript(result);
+  const safeResultJs = jsonForInlineScript(JSON.stringify(result));
 
   return new Response(
     `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Returning to your engraving request</title></head><body><p>Returning to your engraving request…</p><script>try{sessionStorage.setItem("1099-engraving-proof-result",${safeResultJs});}catch(e){}window.location.replace(${safeLocationJs});</script><noscript><meta http-equiv="refresh" content="0;url=${safeLocationHtml}"><p><a href="${safeLocationHtml}">Continue</a></p></noscript></body></html>`,
