@@ -27,10 +27,17 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function returnToStorefront(location) {
-  const safeLocation = escapeHtml(location);
+function jsonForInlineScript(value) {
+  return JSON.stringify(value).replaceAll("<", "\\u003c");
+}
+
+function returnToStorefront(location, result) {
+  const safeLocationHtml = escapeHtml(location);
+  const safeLocationJs = jsonForInlineScript(location);
+  const safeResultJs = jsonForInlineScript(result);
+
   return new Response(
-    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=${safeLocation}"><title>Returning to your engraving request</title></head><body><p>Returning to your engraving request…</p><p><a href="${safeLocation}">Continue</a></p></body></html>`,
+    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Returning to your engraving request</title></head><body><p>Returning to your engraving request…</p><script>try{sessionStorage.setItem("1099-engraving-proof-result",${safeResultJs});}catch(e){}window.location.replace(${safeLocationJs});</script><noscript><meta http-equiv="refresh" content="0;url=${safeLocationHtml}"><p><a href="${safeLocationHtml}">Continue</a></p></noscript></body></html>`,
     {
       status: 200,
       headers: {
@@ -215,19 +222,29 @@ export const action = async ({ request }) => {
       total: result.draftOrder.totalPriceSet?.shopMoney?.amount,
     }));
 
-    return returnToStorefront(withResult(returnPath, {
+    const successLocation = withResult(returnPath, {
       engraving_proof: "submitted",
       proof_ref: result.draftOrder.name,
-    }));
+    });
+
+    return returnToStorefront(successLocation, {
+      state: "submitted",
+      proofRef: result.draftOrder.name,
+      email: customerEmail,
+    });
   } catch (error) {
     console.error("APP PROXY ENGRAVING PROOF SUBMIT ERROR:", error);
     const message = error instanceof EngravingSubmissionInputError
       ? error.message
       : "We couldn’t submit your engraving proof request. Please try again.";
-
-    return returnToStorefront(withResult(returnPath, {
+    const errorLocation = withResult(returnPath, {
       engraving_proof: "error",
       proof_error: message,
-    }));
+    });
+
+    return returnToStorefront(errorLocation, {
+      state: "error",
+      message,
+    });
   }
 };
