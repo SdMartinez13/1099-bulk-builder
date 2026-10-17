@@ -18,14 +18,27 @@ function withResult(returnPath, params) {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
-function redirectToStorefront(location) {
-  return new Response(null, {
-    status: 303,
-    headers: {
-      Location: location,
-      "Cache-Control": "no-store",
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function returnToStorefront(location) {
+  const safeLocation = escapeHtml(location);
+  return new Response(
+    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=${safeLocation}"><title>Returning to your engraving request</title></head><body><p>Returning to your engraving request…</p><p><a href="${safeLocation}">Continue</a></p></body></html>`,
+    {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
     },
-  });
+  );
 }
 
 function normalizeVariantId(value) {
@@ -202,7 +215,7 @@ export const action = async ({ request }) => {
       total: result.draftOrder.totalPriceSet?.shopMoney?.amount,
     }));
 
-    return redirectToStorefront(withResult(returnPath, {
+    return returnToStorefront(withResult(returnPath, {
       engraving_proof: "submitted",
       proof_ref: result.draftOrder.name,
     }));
@@ -212,7 +225,7 @@ export const action = async ({ request }) => {
       ? error.message
       : "We couldn’t submit your engraving proof request. Please try again.";
 
-    return redirectToStorefront(withResult(returnPath, {
+    return returnToStorefront(withResult(returnPath, {
       engraving_proof: "error",
       proof_error: message,
     }));
