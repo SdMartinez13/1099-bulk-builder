@@ -67,6 +67,13 @@ function normalizeQuantity(value) {
   return quantity;
 }
 
+function bulkDiscountFor(quantity) {
+  if (quantity >= 24) return 25;
+  if (quantity >= 10) return 20;
+  if (quantity >= 6) return 10;
+  return 0;
+}
+
 function normalizeArtwork(value) {
   let input = [];
   try {
@@ -159,6 +166,7 @@ export const action = async ({ request }) => {
     }
 
     const variant = await getEngravingVariant(admin, variantId);
+    const bulkDiscount = bulkDiscountFor(quantity);
     const artworkAttributes = artwork.flatMap((item, index) => {
       const label = artwork.length > 1 ? `Artwork ${index + 1}` : "Artwork";
       return [
@@ -175,6 +183,7 @@ export const action = async ({ request }) => {
             id
             name
             totalPriceSet { shopMoney { amount currencyCode } }
+            totalDiscountsSet { shopMoney { amount currencyCode } }
           }
           userErrors { field message }
         }
@@ -187,11 +196,20 @@ export const action = async ({ request }) => {
             ...(customerPhone ? [{ key: "Phone", value: customerPhone }] : []),
             { key: "Workflow", value: "Proof required before invoice/payment" },
             { key: "Request type", value: "Custom engraving" },
+            ...(bulkDiscount > 0 ? [{ key: "Bulk pricing", value: `${bulkDiscount}% off (${quantity} items)` }] : []),
           ],
           tags: ["1099-builder", "proof-required", "engraving-proof"],
           lineItems: [{
             variantId: variant.id,
             quantity,
+            ...(bulkDiscount > 0 ? {
+              appliedDiscount: {
+                title: `Bulk Engraving — ${bulkDiscount}% Off`,
+                description: `${quantity}-item bulk engraving tier`,
+                value: bulkDiscount,
+                valueType: "PERCENTAGE",
+              },
+            } : {}),
             customAttributes: [
               ...(engravingText ? [{ key: "Engraving Text", value: engravingText }] : []),
               ...(engravingNotes ? [{ key: "Engraving Notes", value: engravingNotes }] : []),
@@ -223,6 +241,9 @@ export const action = async ({ request }) => {
     console.log("1099 ENGRAVING PROOF REQUEST CREATED", JSON.stringify({
       name: result.draftOrder.name,
       customerEmail,
+      quantity,
+      bulkDiscount,
+      discountTotal: result.draftOrder.totalDiscountsSet?.shopMoney?.amount,
       total: result.draftOrder.totalPriceSet?.shopMoney?.amount,
     }));
 
