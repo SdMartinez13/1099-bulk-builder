@@ -74,6 +74,83 @@ function bulkDiscountFor(quantity) {
   return 0;
 }
 
+function splitCustomerName(value) {
+  const parts = String(value || "").trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts[0] || "",
+    lastName: parts.slice(1).join(" "),
+  };
+}
+
+async function setEngravingCustomer(admin, identifier, input) {
+  const response = await admin.graphql(`#graphql
+    mutation Set1099EngravingCustomer($identifier: CustomerSetIdentifiers, $input: CustomerSetInput!) {
+      customerSet(identifier: $identifier, input: $input) {
+        customer { id firstName lastName }
+        userErrors { field message }
+      }
+    }`, { variables: { identifier, input } });
+
+  const json = await response.json();
+  if (json?.errors?.length) {
+    console.error("1099 ENGRAVING CUSTOMER GRAPHQL ERRORS:", JSON.stringify(json.errors));
+    throw new Error("Shopify could not save the customer information.");
+  }
+
+  const result = json?.data?.customerSet;
+  if (result?.userErrors?.length) {
+    console.error("1099 ENGRAVING CUSTOMER USER ERRORS:", JSON.stringify(result.userErrors));
+    throw new EngravingSubmissionInputError(
+      result.userErrors.map((item) => item.message).filter(Boolean).join(" ") ||
+        "The customer information could not be saved. Please review your information and try again.",
+    );
+  }
+  if (!result?.customer?.id) throw new Error("Shopify did not return the customer record.");
+
+  return result.customer;
+}
+
+async function getOrCreateEngravingCustomer(admin, customerEmail, customerName) {
+  const response = await admin.graphql(`#graphql
+    query Find1099EngravingCustomer($identifier: CustomerIdentifierInput!) {
+      customerByIdentifier(identifier: $identifier) {
+        id
+        firstName
+        lastName
+      }
+    }`, {
+    variables: { identifier: { emailAddress: customerEmail } },
+  });
+
+  const json = await response.json();
+  if (json?.errors?.length) {
+    console.error("1099 ENGRAVING CUSTOMER LOOKUP ERRORS:", JSON.stringify(json.errors));
+    throw new Error("Shopify could not look up the customer information.");
+  }
+
+  const existing = json?.data?.customerByIdentifier;
+  const { firstName, lastName } = splitCustomerName(customerName);
+
+  if (existing?.id) {
+    const missingName = {};
+    if (!String(existing.firstName || "").trim() && firstName) missingName.firstName = firstName;
+    if (!String(existing.lastName || "").trim() && lastName) missingName.lastName = lastName;
+
+    if (Object.keys(missingName).length === 0) return existing;
+    return setEngravingCustomer(admin, { id: existing.id }, missingName);
+  }
+
+  return setEngravingCustomer(
+    admin,
+    { email: customerEmail },
+    {
+      email: customerEmail,
+      firstName,
+      ...(lastName ? { lastName } : {}),
+    },
+  );
+}
+
 function normalizeArtwork(value) {
   let input = [];
   try {
@@ -166,6 +243,7 @@ export const action = async ({ request }) => {
     }
 
     const variant = await getEngravingVariant(admin, variantId);
+    const customer = await getOrCreateEngravingCustomer(admin, customerEmail, customerName);
     const bulkDiscount = bulkDiscountFor(quantity);
     const artworkAttributes = artwork.flatMap((item, index) => {
       const label = artwork.length > 1 ? `Artwork ${index + 1}` : "Artwork";
@@ -191,6 +269,7 @@ export const action = async ({ request }) => {
       variables: {
         input: {
           email: customerEmail,
+          purchasingEntity: { customerId: customer.id },
           customAttributes: [
             { key: "Customer name", value: customerName },
             ...(customerPhone ? [{ key: "Phone", value: customerPhone }] : []),
