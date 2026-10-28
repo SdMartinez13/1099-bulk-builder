@@ -7,7 +7,7 @@ name = "1099-bulk-builder"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,write_metaobjects,write_metaobject_definitions,write_draft_orders,write_app_proxy,write_files"
+scopes = "write_products,write_metaobjects,write_metaobject_definitions,write_draft_orders,write_app_proxy,write_files,write_customers"
 
 [product.metafields.app.demo_info]
 type = "single_line_text_field"
