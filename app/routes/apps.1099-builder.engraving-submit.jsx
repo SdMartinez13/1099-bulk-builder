@@ -1,4 +1,5 @@
 import { authenticate } from "../shopify.server";
+import { getEngravingBulkDiscount } from "../lib/engraving-bulk-pricing";
 
 const emailLooksValid = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 
@@ -155,6 +156,7 @@ export const action = async ({ request }) => {
     }
 
     const variant = await getEngravingVariant(admin, variantId);
+    const bulkDiscount = getEngravingBulkDiscount(quantity);
     const artworkAttributes = artwork.flatMap((item, index) => {
       const label = artwork.length > 1 ? `Artwork ${index + 1}` : "Artwork";
       return [
@@ -188,9 +190,21 @@ export const action = async ({ request }) => {
           lineItems: [{
             variantId: variant.id,
             quantity,
+            ...(bulkDiscount ? {
+              appliedDiscount: {
+                value: bulkDiscount.percent,
+                valueType: "PERCENTAGE",
+                title: bulkDiscount.title,
+                description: bulkDiscount.description,
+              },
+            } : {}),
             customAttributes: [
               ...(engravingText ? [{ key: "Engraving Text", value: engravingText }] : []),
               ...(engravingNotes ? [{ key: "Engraving Notes", value: engravingNotes }] : []),
+              ...(bulkDiscount ? [{
+                key: "Bulk pricing",
+                value: `${bulkDiscount.percent}% off (${bulkDiscount.label})`,
+              }] : []),
               { key: "Proof", value: "Digital proof required before production" },
               ...artworkAttributes,
             ],
@@ -220,6 +234,7 @@ export const action = async ({ request }) => {
       name: result.draftOrder.name,
       customerEmail,
       total: result.draftOrder.totalPriceSet?.shopMoney?.amount,
+      bulkDiscountPercent: bulkDiscount?.percent || 0,
     }));
 
     const successLocation = withResult(returnPath, {
