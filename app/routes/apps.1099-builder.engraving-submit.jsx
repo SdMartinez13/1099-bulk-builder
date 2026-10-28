@@ -48,6 +48,10 @@ function returnToStorefront(location, result) {
   );
 }
 
+function wantsJson(request) {
+  return String(request.headers.get("accept") || "").toLowerCase().includes("application/json");
+}
+
 function normalizeVariantId(value) {
   const raw = String(value || "").trim();
   if (/^\d+$/.test(raw)) return `gid://shopify/ProductVariant/${raw}`;
@@ -222,6 +226,18 @@ export const action = async ({ request }) => {
       total: result.draftOrder.totalPriceSet?.shopMoney?.amount,
     }));
 
+    if (wantsJson(request)) {
+      return Response.json({
+        ok: true,
+        state: "submitted",
+        proofRef: result.draftOrder.name,
+        email: customerEmail,
+      }, {
+        status: 200,
+        headers: { "Cache-Control": "no-store" },
+      });
+    }
+
     const successLocation = withResult(returnPath, {
       engraving_proof: "submitted",
       proof_ref: result.draftOrder.name,
@@ -237,6 +253,14 @@ export const action = async ({ request }) => {
     const message = error instanceof EngravingSubmissionInputError
       ? error.message
       : "We couldn’t submit your engraving proof request. Please try again.";
+
+    if (wantsJson(request)) {
+      return Response.json({ ok: false, state: "error", error: message }, {
+        status: 400,
+        headers: { "Cache-Control": "no-store" },
+      });
+    }
+
     const errorLocation = withResult(returnPath, {
       engraving_proof: "error",
       proof_error: message,
