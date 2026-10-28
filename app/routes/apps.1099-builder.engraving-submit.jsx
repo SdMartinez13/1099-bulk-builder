@@ -64,6 +64,14 @@ function normalizeQuantity(value) {
   return quantity;
 }
 
+function splitCustomerName(value) {
+  const parts = String(value || "").trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts[0] || "",
+    lastName: parts.slice(1).join(" "),
+  };
+}
+
 function normalizeArtwork(value) {
   let input = [];
   try {
@@ -155,6 +163,7 @@ export const action = async ({ request }) => {
       throw new EngravingSubmissionInputError("Please enter engraving text or upload artwork before submitting for proof.");
     }
 
+    const { firstName, lastName } = splitCustomerName(customerName);
     const variant = await getEngravingVariant(admin, variantId);
     const bulkDiscount = getEngravingBulkDiscount(quantity);
     const artworkAttributes = artwork.flatMap((item, index) => {
@@ -180,6 +189,10 @@ export const action = async ({ request }) => {
       variables: {
         input: {
           email: customerEmail,
+          shippingAddress: {
+            firstName,
+            ...(lastName ? { lastName } : {}),
+          },
           customAttributes: [
             { key: "Customer name", value: customerName },
             ...(customerPhone ? [{ key: "Phone", value: customerPhone }] : []),
